@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "767746831653",
+    "project_id": "servicar-c72f6",
+    "storage_bucket": "servicar-c72f6.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:767746831653:android:4f2dc046b4f5ed325656cc",
+        "android_client_info": {
+          "package_name": "com.servicar.servicar_movil"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBj7VuvvaN9R77ll5HfduzJXDg7Gjc0mic"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
