@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:servicar_movil/src/controllers/usuario_controller.dart';
 import 'package:servicar_movil/src/widgets/dashboard_screen.dart';
+import 'package:servicar_movil/src/widgets/register_car.dart';
 //import 'package:servicarmovil_app/views/dashboard_page.dart';
 
 class RegisterForm extends StatefulWidget {
@@ -35,7 +36,7 @@ class RegisterFormState extends State<RegisterForm> {
         // Reemplaza la pantalla actual con DashboardPage
         Navigator.of(context).pop();
         Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const DashboardScreen()));
+            MaterialPageRoute(builder: (_) => const RegisterCar()));
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: DefaultTextStyle(
