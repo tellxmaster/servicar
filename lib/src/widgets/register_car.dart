@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:servicar_movil/src/controllers/automovil_controller.dart';
 import 'package:servicar_movil/src/widgets/dashboard_screen.dart';
+//import 'package:servicar_movil/src/widgets/dashboard_screen.dart';
 
 class RegisterCar extends StatefulWidget {
   static const String routeName = '/register_car';
@@ -14,33 +15,32 @@ class _RegisterCarState extends State<RegisterCar> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final AutomovilController _automovilController = AutomovilController();
   late String _placa;
-  late int  _kilometraje;
+  late int _kilometraje;
   Future<void> _registrar() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
-      try {
-        await _automovilController.agregarAutomovil(
-             _placa,_kilometraje);
-        // ignore: use_build_context_synchronously
+      await _automovilController
+          .agregarAutomovil(_placa, _kilometraje)
+          .then((_) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Usuario creado correctamente'),
+            content: Text('Carro Registrado Correctamente'),
             backgroundColor: Color(0xFF28A745),
           ),
         );
 
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: DefaultTextStyle(
-            style: TextStyle(color: Colors.white), // Define tu color aquí
-            child: Text('Ocurrió un error'),
+        Navigator.of(context).pushNamed(DashboardScreen.routeName);
+      }).catchError((error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ocurrió un error'),
+            backgroundColor: Color(0xFFdc3545),
           ),
-          backgroundColor: Color(0xFFdc3545),
-        ));
-        print(e);
-      }
+        );
+      });
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -84,9 +84,9 @@ class _RegisterCarState extends State<RegisterCar> {
               ],
             ),
           ),
-        )
-      );
+        ));
   }
+
   Widget _crearPlaca() {
     return TextFormField(
       decoration: const InputDecoration(
@@ -99,6 +99,7 @@ class _RegisterCarState extends State<RegisterCar> {
           value!.isEmpty ? 'Por favor ingrese su placa' : null,
     );
   }
+
   Widget _crearKilometrajeActual() {
     return TextFormField(
       decoration: const InputDecoration(

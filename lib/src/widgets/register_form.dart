@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:servicar_movil/src/controllers/usuario_controller.dart';
-import 'package:servicar_movil/src/widgets/dashboard_screen.dart';
+//import 'package:servicar_movil/src/widgets/dashboard_screen.dart';
 import 'package:servicar_movil/src/widgets/register_car.dart';
 //import 'package:servicarmovil_app/views/dashboard_page.dart';
 

@@ -10,8 +10,7 @@ class SplashScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // Navigate after a delay
     Future.delayed(const Duration(seconds: 3), () {
-      Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const HomeScreen()));
+      Navigator.pushReplacementNamed(context, HomeScreen.routeName);
     });
 
     return const Scaffold(

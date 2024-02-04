@@ -4,6 +4,7 @@ import 'package:servicar_movil/src/widgets/dashboard_screen.dart';
 
 class LoginForm extends StatefulWidget {
   const LoginForm({Key? key}) : super(key: key);
+  static const String routeName = '/login';
 
   @override
   LoginFormState createState() => LoginFormState();
