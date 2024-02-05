@@ -4,6 +4,7 @@ import 'package:servicar_movil/firebase_options.dart';
 import 'package:servicar_movil/src/widgets/dashboard_screen.dart';
 import 'package:servicar_movil/src/widgets/home_screen.dart';
 import 'package:servicar_movil/src/widgets/login_form.dart';
+import 'package:servicar_movil/src/widgets/register_appointment.dart';
 import 'package:servicar_movil/src/widgets/register_car.dart';
 import 'package:servicar_movil/src/widgets/register_form.dart';
 import 'package:servicar_movil/src/widgets/splash_screen.dart';
@@ -40,6 +41,8 @@ class MyApp extends StatelessWidget {
           RegisterForm.routeName: (context) => const RegisterForm(),
           RegisterCar.routeName: (context) => const RegisterCar(),
           DashboardScreen.routeName: (context) => const DashboardScreen(),
+          RegisterAppointment.routeName: (context) =>
+              const RegisterAppointment()
         });
   }
 }

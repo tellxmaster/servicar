@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:servicar_movil/src/widgets/register_appointment.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -21,7 +22,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Card(
-              color: const Color(0xFF4709C),
+              color: const Color(0x0ff4709c),
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
                 child: Column(
@@ -81,6 +82,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ],
                 ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context)
+                      .pushNamed(RegisterAppointment.routeName);
+                },
+                child: Text('Agendar Nueva Cita'),
               ),
             ),
             const SizedBox(height: 10),
