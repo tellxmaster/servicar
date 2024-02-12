@@ -27,12 +27,29 @@ class MyApp extends StatelessWidget {
         title: 'ServiCar',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
-          brightness: Brightness.dark,
           colorScheme: const ColorScheme.dark(
-            primary: Color(0xFF673AB7),
-            secondary: Color.fromRGBO(124, 77, 255, 1),
+            primary: Colors.white, // Deep purple
+            onPrimary: Colors.white, // Text color on primary color backgrounds
+            secondary: Color.fromRGBO(219, 219, 219, 1), // Lighter purple
+            onSecondary:
+                Colors.white, // Text color on secondary color backgrounds
+            background:
+                Color(0xFF212121), // Dark grey for compatible backgrounds
           ),
-          useMaterial3: true,
+          useMaterial3: true, // Enable Material 3 features
+          scaffoldBackgroundColor: Colors.transparent,
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white, // Button background color
+              foregroundColor: const Color(0xFF673AB7), // Text color
+              padding: const EdgeInsets.symmetric(vertical: 15.0),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8), // Rounded corners
+              ),
+              elevation: 5, // Shadow depth
+            ),
+          ),
+          // Additional customizations can be added here
         ),
         home: const SplashScreen(),
         routes: {

@@ -1,3 +1,4 @@
+// Task: Formulario Registro de Citas
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:servicar_movil/src/models/servicio.dart';
@@ -9,9 +10,11 @@ import 'package:servicar_movil/src/controllers/cita_controller.dart';
 import 'package:servicar_movil/src/controllers/servicio_controller.dart';
 import 'package:servicar_movil/src/controllers/trabajador_controller.dart';
 import 'package:collection/collection.dart';
+import 'package:servicar_movil/src/widgets/date_picker_form_field.dart';
 
 class RegisterAppointment extends StatefulWidget {
   static const String routeName = '/register_appointment';
+
   const RegisterAppointment({super.key});
 
   @override
@@ -130,132 +133,140 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Registrar Nueva Cita'),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: <Widget>[
-            //Dropdown para seleccionar el area
-            DropdownButtonFormField<String>(
-              value: selectedAreaId,
-              onChanged: (newValue) {
-                setState(() {
-                  selectedAreaId = newValue;
-                  cargarServiciosPorArea(selectedAreaId!);
-                  cargarTrabajadoresPorArea(selectedAreaId!);
-                });
-              },
-              items: areas.map<DropdownMenuItem<String>>((Area area) {
-                return DropdownMenuItem<String>(
-                  value: area.idArea,
-                  child: Text(area.nombre),
-                );
-              }).toList(),
-              decoration: const InputDecoration(
-                labelText: 'Área',
-              ),
-            ),
-
-            SizedBox(height: 20),
-            // Dropdown para seleccionar el servicio
-            DropdownButtonFormField<String>(
-              value: selectedServiceId,
-              onChanged: (newValue) {
-                setState(() {
-                  selectedServiceId = newValue;
-                  // Aquí podrías cargar información adicional basada en el servicio seleccionado si fuera necesario
-                });
-              },
-              items:
-                  servicios.map<DropdownMenuItem<String>>((Servicio servicio) {
-                return DropdownMenuItem<String>(
-                  value: servicio
-                      .idServicio, // Asumiendo que Servicio tiene un campo id
-                  child: Text(servicio.nombre), // y un campo nombre
-                );
-              }).toList(),
-              decoration: const InputDecoration(
-                labelText: 'Servicio',
-              ),
-            ),
-
-            SizedBox(height: 20),
-            // Dropdown para seleccionar el trabajador
-            DropdownButtonFormField<String>(
-              value: selectedWorkerId,
-              onChanged: (newValue) {
-                setState(() {
-                  selectedWorkerId = newValue;
-                  calcularHorariosDisponibles();
-                  // Similarmente, podrías cargar más datos basados en el trabajador seleccionado si es necesario
-                });
-              },
-              items: trabajadores
-                  .map<DropdownMenuItem<String>>((Trabajador trabajador) {
-                return DropdownMenuItem<String>(
-                  value: trabajador
-                      .idTrabajador, // Asumiendo que Trabajador tiene un campo id
-                  child: Text(trabajador.nombre), // y un campo nombre
-                );
-              }).toList(),
-              decoration: const InputDecoration(
-                labelText: 'Trabajador',
-              ),
-            ),
-
-            SizedBox(height: 20),
-            // Selector de fecha
-            ElevatedButton(
-              onPressed: () async {
-                final DateTime? pickedDate = await showDatePicker(
-                  context: context,
-                  initialDate: selectedDate,
-                  firstDate: DateTime.now(),
-                  lastDate: DateTime(2101),
-                );
-                if (pickedDate != null && pickedDate != selectedDate) {
-                  setState(() {
-                    selectedDate = pickedDate;
-                  });
-                }
-              },
-              child: Text('Seleccionar Fecha'),
-            ),
-            SizedBox(height: 20),
-            // Selector de hora
-            DropdownButtonFormField<String>(
-              value:
-                  selectedTimeSlot, // Asegúrate de manejar este estado correctamente
-              onChanged: (newValue) {
-                setState(() {
-                  selectedTimeSlot = newValue;
-                });
-              },
-              items:
-                  availableTimes.map<DropdownMenuItem<String>>((String time) {
-                return DropdownMenuItem<String>(
-                  value: time,
-                  child: Text(time),
-                );
-              }).toList(),
-              decoration: const InputDecoration(
-                labelText: 'Horario Disponible',
-              ),
-            ),
-
-            SizedBox(height: 20),
-            // Botón para enviar/agendar la cita
-            ElevatedButton(
-              onPressed: () {
-                // Aquí lógica para crear y guardar la cita
-              },
-              child: const Text('Agendar Cita'),
-            ),
-          ],
+        appBar: AppBar(
+          title: const Text('Registrar Nueva Cita'),
         ),
-      ),
-    );
+        body: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topRight,
+                end: Alignment.bottomLeft,
+                colors: [
+                  Color(0xFF673AB7), // Start color
+                  Color.fromRGBO(124, 77, 255, 1), // End color
+                ],
+              ),
+            ),
+            child: Stack(
+              children: [
+                Column(children: [
+                  SingleChildScrollView(
+                    padding: const EdgeInsets.all(25.0),
+                    child: Column(
+                      children: <Widget>[
+                        //Dropdown para seleccionar el area
+                        DropdownButtonFormField<String>(
+                          value: selectedAreaId,
+                          onChanged: (newValue) {
+                            setState(() {
+                              selectedAreaId = newValue;
+                              cargarServiciosPorArea(selectedAreaId!);
+                              cargarTrabajadoresPorArea(selectedAreaId!);
+                            });
+                          },
+                          items:
+                              areas.map<DropdownMenuItem<String>>((Area area) {
+                            return DropdownMenuItem<String>(
+                              value: area.idArea,
+                              child: Text(area.nombre),
+                            );
+                          }).toList(),
+                          decoration: const InputDecoration(
+                            labelText: 'Área',
+                            prefixIcon: Icon(Icons.car_repair),
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+                        // Dropdown para seleccionar el servicio
+                        DropdownButtonFormField<String>(
+                          value: selectedServiceId,
+                          onChanged: (newValue) {
+                            setState(() {
+                              selectedServiceId = newValue;
+                              // Aquí podrías cargar información adicional basada en el servicio seleccionado si fuera necesario
+                            });
+                          },
+                          items: servicios.map<DropdownMenuItem<String>>(
+                              (Servicio servicio) {
+                            return DropdownMenuItem<String>(
+                              value: servicio
+                                  .idServicio, // Asumiendo que Servicio tiene un campo id
+                              child: Text(servicio.nombre), // y un campo nombre
+                            );
+                          }).toList(),
+                          decoration: const InputDecoration(
+                            labelText: 'Servicio',
+                            prefixIcon: Icon(Icons.car_crash),
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+                        // Dropdown para seleccionar el trabajador
+                        DropdownButtonFormField<String>(
+                          value: selectedWorkerId,
+                          onChanged: (newValue) {
+                            setState(() {
+                              selectedWorkerId = newValue;
+                              calcularHorariosDisponibles();
+                              // Similarmente, podrías cargar más datos basados en el trabajador seleccionado si es necesario
+                            });
+                          },
+                          items: trabajadores.map<DropdownMenuItem<String>>(
+                              (Trabajador trabajador) {
+                            return DropdownMenuItem<String>(
+                              value: trabajador
+                                  .idTrabajador, // Asumiendo que Trabajador tiene un campo id
+                              child:
+                                  Text(trabajador.nombre), // y un campo nombre
+                            );
+                          }).toList(),
+                          decoration: const InputDecoration(
+                            labelText: 'Trabajador',
+                            prefixIcon: Icon(Icons.work),
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+                        // Selector de fecha
+                        const DatePickeFormField(),
+                        const SizedBox(height: 20),
+                        // Selector de hora
+                        DropdownButtonFormField<String>(
+                          value:
+                              selectedTimeSlot, // Asegúrate de manejar este estado correctamente
+                          onChanged: (newValue) {
+                            setState(() {
+                              selectedTimeSlot = newValue;
+                            });
+                          },
+                          items: availableTimes
+                              .map<DropdownMenuItem<String>>((String time) {
+                            return DropdownMenuItem<String>(
+                              value: time,
+                              child: Text(time),
+                            );
+                          }).toList(),
+                          decoration: const InputDecoration(
+                            labelText: 'Horario Disponible',
+                            prefixIcon: Icon(Icons.query_builder),
+                          ),
+                        ),
+
+                        const SizedBox(height: 30),
+                        // Botón para enviar/agendar la cita
+                        SizedBox(
+                          width: double.infinity, // Ancho del 100%
+                          child: ElevatedButton(
+                            onPressed: () {},
+                            child: const Text('AGENDAR'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ])
+              ],
+            )));
   }
 }

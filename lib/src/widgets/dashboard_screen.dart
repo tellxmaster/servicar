@@ -43,30 +43,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
             },
           )
         ],
-        backgroundColor: Colors.deepPurple, // Improved AppBar color
+        backgroundColor:
+            const Color.fromARGB(255, 22, 22, 22), // Improved AppBar color
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _vehicleDataCard(),
-              const SizedBox(height: 20),
-              _technicalDataSection(),
-              const SizedBox(height: 20),
-              _appointmentSummarySection(),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topRight,
+            end: Alignment.bottomLeft,
+            colors: [
+              Color(0xFF673AB7), // Start color
+              Color.fromRGBO(124, 77, 255, 1), // End color
             ],
           ),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+        child: Stack(
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _vehicleDataCard(),
+                const SizedBox(height: 20),
+                _technicalDataSection(),
+                const SizedBox(height: 20),
+                _appointmentSummarySection(),
+              ],
+            ),
+          ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.of(context).pushNamed(RegisterAppointment.routeName);
         },
+        foregroundColor: Colors.deepPurple,
         child: const Icon(Icons.add),
-        backgroundColor:
-            Colors.deepPurple, // Match the FloatingActionButton with AppBar
       ),
     );
   }
