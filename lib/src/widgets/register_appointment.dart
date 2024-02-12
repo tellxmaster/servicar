@@ -134,7 +134,7 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
         title: const Text('Registrar Nueva Cita'),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           children: <Widget>[
             //Dropdown para seleccionar el area

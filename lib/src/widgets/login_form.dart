@@ -17,39 +17,26 @@ class LoginFormState extends State<LoginForm> {
   final UsuarioController _usuarioController = UsuarioController();
 
   Future<void> _ingresar() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    _formKey.currentState!.save();
-    setState(() => _loading = true);
-
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
-
-    try {
-      // Aquí va tu lógica de autenticación
-      // Ejemplo: await tuMetodoDeAutenticacion(_correo, _password);
-      // Por ahora, simulo una demora
-      await _usuarioController.autenticarUsuario(_correo, _password);
-
-      // Navegación al dashboard o pantalla principal
-      Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const DashboardScreen()));
-
-      scaffoldMessenger.showSnackBar(
-        const SnackBar(
-          content: Text('Ingreso exitoso'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    } catch (e) {
-      // Manejo de errores
-      scaffoldMessenger.showSnackBar(
-        SnackBar(
-          content: Text('Error de autenticación: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } finally {
-      setState(() => _loading = false);
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      setState(() => _loading = true);
+      await _usuarioController.autenticarUsuario(_correo, _password).then((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ingreso Exitoso'),
+            backgroundColor: Color(0xFF28A745),
+          ),
+        );
+        setState(() => _loading = false);
+        Navigator.of(context).pushNamed(DashboardScreen.routeName);
+      }).catchError((error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ocurrió un error'),
+            backgroundColor: Color(0xFFdc3545),
+          ),
+        );
+      });
     }
   }
 
