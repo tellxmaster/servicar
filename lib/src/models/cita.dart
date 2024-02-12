@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 Cita citaFromJson(String str) => Cita.fromJson(json.decode(str));
 
 String citaToJson(Cita data) => json.encode(data.toJson());
@@ -9,8 +11,8 @@ class Cita {
   String idCliente;
   String idServicio;
   String idTrabajador;
-  String fechaHoraInicio;
-  String fechaHoraFin;
+  Timestamp fechaHoraInicio;
+  Timestamp fechaHoraFin;
   String estado;
 
   Cita({

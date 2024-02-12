@@ -1,6 +1,7 @@
 // Task: Formulario Registro de Citas
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:servicar_movil/src/models/rango_horario.dart';
 import 'package:servicar_movil/src/models/servicio.dart';
 import 'package:servicar_movil/src/models/trabajador.dart';
 import 'package:servicar_movil/src/models/area.dart';
@@ -10,7 +11,9 @@ import 'package:servicar_movil/src/controllers/cita_controller.dart';
 import 'package:servicar_movil/src/controllers/servicio_controller.dart';
 import 'package:servicar_movil/src/controllers/trabajador_controller.dart';
 import 'package:collection/collection.dart';
+import 'package:servicar_movil/src/widgets/dashboard_screen.dart';
 import 'package:servicar_movil/src/widgets/date_picker_form_field.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class RegisterAppointment extends StatefulWidget {
   static const String routeName = '/register_appointment';
@@ -92,16 +95,38 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
       selectedDate!,
     );
 
+    print(selectedWorkerId);
+    print(selectedServiceId);
+    print(selectedDate);
+    print(citasDelDia);
+
     // Aquí debes calcular los horarios de trabajo del trabajador seleccionado.
     // Para este ejemplo, asumiremos un horario fijo de 9:00 a 17:00.
     List<String> horariosTrabajo =
-        generarHorariosTrabajo(9, 17, duracionServicio);
+        generarHorariosTrabajo(8, 16, duracionServicio);
 
     // Excluye los horarios ocupados por las citas existentes.
     availableTimes = filtrarHorariosDisponibles(
         horariosTrabajo, citasDelDia, duracionServicio);
 
     setState(() {});
+  }
+
+  RangoHorario convertirRangoATimestamps(String rangoHorario) {
+    List<String> partes = rangoHorario.split(' - ');
+    List<String> horaInicioPartes = partes[0].split(':');
+    List<String> horaFinPartes = partes[1].split(':');
+
+    DateTime ahora = DateTime.now();
+    DateTime inicioDateTime = DateTime(ahora.year, ahora.month, ahora.day,
+        int.parse(horaInicioPartes[0]), int.parse(horaInicioPartes[1]));
+    DateTime finDateTime = DateTime(ahora.year, ahora.month, ahora.day,
+        int.parse(horaFinPartes[0]), int.parse(horaFinPartes[1]));
+
+    Timestamp inicioTimestamp = Timestamp.fromDate(inicioDateTime);
+    Timestamp finTimestamp = Timestamp.fromDate(finDateTime);
+
+    return RangoHorario(inicio: inicioTimestamp, fin: finTimestamp);
   }
 
   List<String> generarHorariosTrabajo(
@@ -124,10 +149,61 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
 
   List<String> filtrarHorariosDisponibles(List<String> horariosTrabajo,
       List<Cita> citasDelDia, int duracionServicio) {
-    // Aquí debes excluir los horarios que se solapen con las citas existentes.
-    // Esta implementación depende de cómo estés almacenando las horas (como strings, DateTime, etc.).
-    // Debes convertir las horas de inicio y fin de las citas a DateTime y compararlas con los horarios de trabajo generados.
-    return horariosTrabajo; // Retorna la lista filtrada.
+    // Convertir rangos de citas a strings en formato "HH:mm - HH:mm"
+    List<String> rangosCitas = citasDelDia.map((cita) {
+      String inicio =
+          "${cita.fechaHoraInicio.toDate().hour.toString().padLeft(2, '0')}:${cita.fechaHoraInicio.toDate().minute.toString().padLeft(2, '0')}";
+      String fin =
+          "${cita.fechaHoraFin.toDate().hour.toString().padLeft(2, '0')}:${cita.fechaHoraFin.toDate().minute.toString().padLeft(2, '0')}";
+      return "$inicio - $fin";
+    }).toList();
+
+    List<String> horariosDisponibles = [];
+
+    // Verificar cada horario de trabajo contra los rangos de citas
+    for (var horario in horariosTrabajo) {
+      bool esDisponible = true;
+      for (var rangoCita in rangosCitas) {
+        // Dividir los horarios y rangos de citas en inicio y fin
+        List<String> horasHorario = horario.split(' - ');
+        List<String> horasCita = rangoCita.split(' - ');
+
+        // Convertir a DateTime para comparar
+        DateTime inicioHorario = DateTime(
+            0,
+            0,
+            0,
+            int.parse(horasHorario[0].split(':')[0]),
+            int.parse(horasHorario[0].split(':')[1]));
+        DateTime finHorario =
+            inicioHorario.add(Duration(minutes: duracionServicio));
+        DateTime inicioCita = DateTime(
+            0,
+            0,
+            0,
+            int.parse(horasCita[0].split(':')[0]),
+            int.parse(horasCita[0].split(':')[1]));
+        DateTime finCita = DateTime(
+            0,
+            0,
+            0,
+            int.parse(horasCita[1].split(':')[0]),
+            int.parse(horasCita[1].split(':')[1]));
+
+        // Comprobar si el horario se solapa con alguna cita
+        if (!(finHorario.isBefore(inicioCita) ||
+            inicioHorario.isAfter(finCita))) {
+          esDisponible = false;
+          break;
+        }
+      }
+
+      if (esDisponible) {
+        horariosDisponibles.add(horario);
+      }
+    }
+
+    return horariosDisponibles;
   }
 
   @override
@@ -229,7 +305,13 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
 
                         const SizedBox(height: 20),
                         // Selector de fecha
-                        const DatePickeFormField(),
+                        DatePickerFormField(
+                          onDateSelected: (DateTime date) {
+                            // Aquí puedes manejar la fecha seleccionada, por ejemplo, actualizar el estado del componente padre
+                            selectedDate = date;
+                            calcularHorariosDisponibles();
+                          },
+                        ),
                         const SizedBox(height: 20),
                         // Selector de hora
                         DropdownButtonFormField<String>(
@@ -255,10 +337,60 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
 
                         const SizedBox(height: 30),
                         // Botón para enviar/agendar la cita
+                        // Botón para enviar/agendar la cita
                         SizedBox(
                           width: double.infinity, // Ancho del 100%
                           child: ElevatedButton(
-                            onPressed: () {},
+                            onPressed: selectedTimeSlot != null
+                                ? () async {
+                                    // Aquí, convertir el horario seleccionado a Timestamps de inicio y fin
+                                    RangoHorario rangoHorario =
+                                        convertirRangoATimestamps(
+                                            selectedTimeSlot!);
+
+                                    // Crear el objeto Cita
+                                    Cita cita = Cita(
+                                      idCita:
+                                          '', // Este valor se actualizará después de crear la cita en Firestore
+                                      idCliente:
+                                          'idCliente', // Deberás reemplazar esto con el ID real del cliente
+                                      idServicio:
+                                          selectedServiceId!, // ID del servicio seleccionado
+                                      idTrabajador:
+                                          selectedWorkerId!, // ID del trabajador seleccionado
+                                      fechaHoraInicio: rangoHorario.inicio,
+                                      fechaHoraFin: rangoHorario.fin,
+                                      estado:
+                                          'pendiente', // Estado inicial de la cita
+                                    );
+
+                                    // Llamar a la función para crear la cita en Firestore
+                                    await CitasController()
+                                        .crearCita(cita)
+                                        .then((_) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content:
+                                              Text('Cita agendada con éxito'),
+                                          backgroundColor: Color(0xFF28A745),
+                                        ),
+                                      );
+                                      Navigator.of(context)
+                                          .pushNamed(DashboardScreen.routeName);
+                                    }).catchError((error) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                              'Ocurrió un error: $error'), // Mostrar el error puede ser útil
+                                          backgroundColor:
+                                              const Color(0xFFdc3545),
+                                        ),
+                                      );
+                                    });
+                                  }
+                                : null,
                             child: const Text('AGENDAR'),
                           ),
                         ),

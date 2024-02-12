@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-class DatePickeFormField extends StatefulWidget {
-  const DatePickeFormField({super.key});
+// Añade un nuevo parámetro al constructor de la clase para el callback
+class DatePickerFormField extends StatefulWidget {
+  final Function(DateTime)
+      onDateSelected; // El callback que se invocará con la nueva fecha
+
+  const DatePickerFormField({super.key, required this.onDateSelected});
 
   @override
-  State<DatePickeFormField> createState() => _DatePickeFormFieldState();
+  State<DatePickerFormField> createState() => _DatePickerFormFieldState();
 }
 
-class _DatePickeFormFieldState extends State<DatePickeFormField> {
+class _DatePickerFormFieldState extends State<DatePickerFormField> {
   late TextEditingController _controller;
   DateTime selectedDate = DateTime.now();
 
@@ -21,17 +25,17 @@ class _DatePickeFormFieldState extends State<DatePickeFormField> {
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: selectedDate, // Fecha inicial seleccionada
-      firstDate: DateTime.now(), // La fecha actual como primer fecha disponible
-      lastDate: DateTime.now().add(const Duration(
-          days: 7)), // Máximo una semana a partir de la fecha actual
+      initialDate: selectedDate,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 7)),
     );
     if (picked != null && picked != selectedDate) {
       setState(() {
         selectedDate = picked;
-        // Formatea la fecha y la asigna al controlador del campo de texto para mostrarla
         _controller.text = DateFormat('yyyy-MM-dd').format(picked);
       });
+      // Aquí se invoca el callback pasando la fecha seleccionada
+      widget.onDateSelected(picked);
     }
   }
 
@@ -51,8 +55,8 @@ class _DatePickeFormFieldState extends State<DatePickeFormField> {
       ),
       validator: (value) =>
           value!.isEmpty ? 'Por favor seleccione una fecha' : null,
-      onTap: () => _selectDate(context), // Abre el DatePicker al tocar el campo
-      readOnly: true, // Hace el campo de texto no editable directamente
+      onTap: () => _selectDate(context),
+      readOnly: true,
     );
   }
 }
