@@ -9,7 +9,18 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
+        body: Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+          colors: [
+            Color(0xFF673AB7), // Start color
+            Color.fromRGBO(124, 77, 255, 1), // End color
+          ],
+        ),
+      ),
+      child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
@@ -29,8 +40,8 @@ class HomeScreen extends StatelessWidget {
                   padding:
                       EdgeInsets.symmetric(horizontal: 30.0, vertical: 10.0),
                   child: Text(
-                    "Necesitas una cuenta para continuar",
-                    style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+                    "Es necesario una cuenta para continuar",
+                    style: TextStyle(fontSize: 12, fontStyle: FontStyle.normal),
                   ),
                 ),
                 Padding(
@@ -66,6 +77,6 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ));
   }
 }

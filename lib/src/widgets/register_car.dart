@@ -1,7 +1,7 @@
+// Task: Formulario Registro de Carro por Usuario
 import 'package:flutter/material.dart';
 import 'package:servicar_movil/src/controllers/automovil_controller.dart';
 import 'package:servicar_movil/src/widgets/dashboard_screen.dart';
-//import 'package:servicar_movil/src/widgets/dashboard_screen.dart';
 
 class RegisterCar extends StatefulWidget {
   static const String routeName = '/register_car';
@@ -44,47 +44,57 @@ class _RegisterCarState extends State<RegisterCar> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          //backgroundColor: Colors.blue,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          title: const Text('Registro de autómovil'),
-        ),
         body: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 40.0),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                const SizedBox(height: 50),
-                Form(
-                  key: _formKey,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topRight,
+                end: Alignment.bottomLeft,
+                colors: [
+                  Color(0xFF673AB7), // Start color
+                  Color.fromRGBO(124, 77, 255, 1), // End color
+                ],
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 30.0),
+            child: Stack(
+              children: [
+                Center(
                   child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
-                      _crearPlaca(),
-                      const SizedBox(height: 20),
-                      _crearKilometrajeActual(),
-                      const SizedBox(height: 30),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 20.0, horizontal: 20.0),
-                          ),
-                          onPressed: _registrar,
-                          child: const Text('REGISTRAR'),
+                      const Text(
+                        'Registrar Vehiculo',
+                        style: TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 50),
+                      Form(
+                        key: _formKey,
+                        child: Column(
+                          children: <Widget>[
+                            _crearPlaca(),
+                            const SizedBox(height: 20),
+                            _crearKilometrajeActual(),
+                            const SizedBox(height: 30),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 20.0, horizontal: 20.0),
+                                ),
+                                onPressed: _registrar,
+                                child: const Text('REGISTRAR'),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
               ],
-            ),
-          ),
-        ));
+            )));
   }
 
   Widget _crearPlaca() {
