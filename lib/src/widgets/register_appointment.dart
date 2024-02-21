@@ -1,4 +1,5 @@
 // Task: Formulario Registro de Citas
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:servicar_movil/src/models/rango_horario.dart';
@@ -34,13 +35,17 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
   List<Servicio> servicios = [];
   List<Trabajador> trabajadores = [];
   List<String> availableTimes = [];
+  late FirebaseAuth _auth2;
+  late String uid;
 
   @override
   void initState() {
     super.initState();
     cargarAreas();
+    _auth2 = FirebaseAuth.instance;
+    uid = _auth2.currentUser!.uid;
   }
-
+  
   void cargarAreas() async {
     areas = await AreaController()
         .obtenerAreas(); // Asume que este método existe y funciona correctamente
@@ -353,7 +358,7 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
                                       idCita:
                                           '', // Este valor se actualizará después de crear la cita en Firestore
                                       idCliente:
-                                          'idCliente', // Deberás reemplazar esto con el ID real del cliente
+                                          uid, // Deberás reemplazar esto con el ID real del cliente
                                       idServicio:
                                           selectedServiceId!, // ID del servicio seleccionado
                                       idTrabajador:

@@ -35,4 +35,17 @@ class ServicioController with ChangeNotifier {
       throw Exception('Error al obtener servicios por área');
     }
   }
+  Future<String> obtenerServicioPoridServicio(String idServicio) async {
+    DocumentSnapshot doc =
+        await _db.collection('servicios').doc(idServicio).get();
+
+    if (doc.exists) {
+      Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+      return data['nombre'] ??
+          ''; // Reemplaza 'modelo' con el nombre de campo que estés usando para el modelo del auto
+    } else {
+      throw Exception('Servicio no encontrado');
+    }
+  }
+
 }

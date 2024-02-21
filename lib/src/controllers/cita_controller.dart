@@ -1,7 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/cita.dart'; // Asume que tienes este modelo definido
+import 'package:flutter/material.dart';
+import '../models/cita.dart';
 
-class CitasController {
+class CitasController extends ChangeNotifier {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   // Método para crear una nueva cita
@@ -44,4 +45,34 @@ class CitasController {
 
     return citas;
   }
+  Future<List<Cita>> obtenerCitasPorUsuario(String uid) async {
+    try {
+      // Intenta obtener todas las citas para el usuario especificado.
+      QuerySnapshot querySnapshot = await _db
+          .collection('citas')
+          .where('idCliente', isEqualTo: uid)
+          .get();
+
+      // Si no hay documentos, retorna una lista vacía y opcionalmente maneja este caso.
+      if (querySnapshot.docs.isEmpty) {
+        // Puedes manejar el caso de "sin resultados" aquí si es necesario, por ejemplo, registrando un mensaje.
+        print('No se encontraron citas para el usuario con UID: $uid');
+        return [];
+      }
+
+      // Convierte los documentos de Firestore en objetos Cita.
+      var citas = querySnapshot.docs
+          .map((doc) => Cita.fromJson(doc.data() as Map<String, dynamic>))
+          .toList();
+
+      return citas;
+    } catch (e) {
+      // Maneja cualquier error que ocurra durante la consulta o el procesamiento de los datos.
+      print('Ocurrió un error al obtener las citas para el usuario con UID: $uid. Error: $e');
+      // Opcionalmente, puedes lanzar una excepción personalizada o devolver una lista vacía.
+      throw Exception('Error al obtener las citas: $e');
+    }
+  }
+
+
 }

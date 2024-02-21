@@ -14,7 +14,7 @@ class Usuario {
   String correo;
   String celular;
   String fechaCreacion;
-  String ultimaConexion;
+  Timestamp ultimaConexion;
 
   Usuario({
     required this.uid,
@@ -34,10 +34,8 @@ class Usuario {
         cedula: json["cedula"],
         correo: json["correo"],
         celular: json["celular"],
-        fechaCreacion:
-            (json["fechaCreacion"] as Timestamp).toDate().toIso8601String(),
-        ultimaConexion:
-            (json["ultimaConexion"] as Timestamp).toDate().toIso8601String(),
+        fechaCreacion:json["fechaCreacion"],
+        ultimaConexion: json["ultimaConexion"] ?? Timestamp.now(),
       );
 
   Map<String, dynamic> toJson() => {
