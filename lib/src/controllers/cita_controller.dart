@@ -1,20 +1,76 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../models/cita.dart';
+import '../models/servicio.dart';
 
 class CitasController extends ChangeNotifier {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   // Método para crear una nueva cita
   Future<void> crearCita(Cita cita) async {
-    DocumentReference ref = await _db.collection('citas').add(cita.toJson());
-    // Opcionalmente, actualiza el documento con el ID generado si es necesario
-    await ref.update({'idCita': ref.id});
+    // Obtener el usuario actualmente autenticado
+    User? usuarioActual = FirebaseAuth.instance.currentUser;
+    String? emailDestinatario = usuarioActual?.email;
+
+    if (emailDestinatario != null) {
+      // Crear la cita en la colección 'citas'
+      DocumentReference refCita =
+          await _db.collection('citas').add(cita.toJson());
+      // Actualiza el documento de la cita con el ID generado
+      await refCita.update({'idCita': refCita.id});
+
+      // Obtener el documento del servicio basado en el idServicio
+      DocumentSnapshot servicioDoc =
+          await _db.collection('servicios').doc(cita.idServicio).get();
+      // Decodificar el documento a una instancia de Servicio
+      Servicio servicio =
+          Servicio.fromJson(servicioDoc.data() as Map<String, dynamic>);
+
+      // Construir el mensaje del correo electrónico usando el modelo Servicio
+      String asunto = "Confirmación de Cita";
+      String mensaje =
+          "Estimado $emailDestinatario, su cita para ${servicio.nombre} el día ${cita.fechaHoraInicio.toDate()} - ${cita.fechaHoraFin.toDate()} ha sido agendada.";
+
+      // Crear el item en la colección 'mail' para el Trigger Email
+      await _db.collection('mail').add({
+        'to': emailDestinatario, // Destinatario del correo
+        'message': {
+          'subject': asunto, // Asunto del correo
+          'text': mensaje // Cuerpo del correo
+        }
+      });
+    } else {
+      // Manejar el caso de que no haya un usuario autenticado
+      print("No hay un usuario autenticado para enviar el correo.");
+    }
   }
 
   // Método para editar una cita existente
   Future<void> editarCita(Cita cita) async {
     await _db.collection('citas').doc(cita.idCita).update(cita.toJson());
+  }
+
+  Future<void> eliminarCitaPorId(String idCita) async {
+    await _db.collection('citas').doc(idCita).delete();
+  }
+
+  Future<Cita> obtenerDetalleCita(String idCita) async {
+    DocumentSnapshot docSnapshot =
+        await _db.collection('citas').doc(idCita).get();
+
+    if (docSnapshot.exists) {
+      // Utiliza Cita.fromJson para convertir los datos del documento en una instancia de Cita.
+      // Asegúrate de incluir el 'idCita' en el mapa, ya que Firestore no lo incluye por defecto.
+      Map<String, dynamic> data = docSnapshot.data() as Map<String, dynamic>;
+      data['idCita'] =
+          docSnapshot.id; // Asegura que el idCita se incluya en los datos.
+
+      Cita cita = Cita.fromJson(data);
+      return cita;
+    } else {
+      throw Exception('La cita no existe');
+    }
   }
 
   // Método para obtener citas por trabajador y fecha
@@ -45,6 +101,7 @@ class CitasController extends ChangeNotifier {
 
     return citas;
   }
+
   Future<List<Cita>> obtenerCitasPorUsuario(String uid) async {
     try {
       // Intenta obtener todas las citas para el usuario especificado.
@@ -68,11 +125,10 @@ class CitasController extends ChangeNotifier {
       return citas;
     } catch (e) {
       // Maneja cualquier error que ocurra durante la consulta o el procesamiento de los datos.
-      print('Ocurrió un error al obtener las citas para el usuario con UID: $uid. Error: $e');
+      print(
+          'Ocurrió un error al obtener las citas para el usuario con UID: $uid. Error: $e');
       // Opcionalmente, puedes lanzar una excepción personalizada o devolver una lista vacía.
       throw Exception('Error al obtener las citas: $e');
     }
   }
-
-
 }

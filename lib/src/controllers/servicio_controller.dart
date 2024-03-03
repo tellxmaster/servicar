@@ -35,6 +35,7 @@ class ServicioController with ChangeNotifier {
       throw Exception('Error al obtener servicios por área');
     }
   }
+
   Future<String> obtenerServicioPoridServicio(String idServicio) async {
     DocumentSnapshot doc =
         await _db.collection('servicios').doc(idServicio).get();
@@ -48,4 +49,19 @@ class ServicioController with ChangeNotifier {
     }
   }
 
+  Future<String> obtenerNombreServicioPorId(String idServicio) async {
+    try {
+      DocumentSnapshot servicioDoc =
+          await _db.collection('servicios').doc(idServicio).get();
+      if (servicioDoc.exists) {
+        Map<String, dynamic> data = servicioDoc.data() as Map<String, dynamic>;
+        String nombreServicio = data['nombre'] as String;
+        return nombreServicio;
+      } else {
+        throw Exception('Servicio no encontrado');
+      }
+    } catch (e) {
+      throw Exception('Error al obtener el servicio: $e');
+    }
+  }
 }

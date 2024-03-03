@@ -59,7 +59,6 @@ class RegisterFormState extends State<RegisterForm> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text('Registrarse'),
-        backgroundColor: const Color.fromARGB(255, 22, 22, 22),
         elevation: 0,
       ),
       body: Container(
@@ -68,8 +67,8 @@ class RegisterFormState extends State<RegisterForm> {
             begin: Alignment.topRight,
             end: Alignment.bottomLeft,
             colors: [
-              Color(0xFF673AB7), // Start color
-              Color.fromRGBO(124, 77, 255, 1), // End color
+              Color(0xFFFFFFFF), // Blanco puro, color de inicio
+              Color(0xFFF7F7F7), // Gris muy claro, casi blanco, color de fin
             ],
           ),
         ),

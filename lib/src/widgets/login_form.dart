@@ -66,8 +66,7 @@ class LoginFormState extends State<LoginForm> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text('Ingreso'),
-        backgroundColor: const Color.fromARGB(255, 22, 22, 22),
-        elevation: 0,
+        elevation: 5,
       ),
       body: Container(
         decoration: const BoxDecoration(
@@ -75,8 +74,8 @@ class LoginFormState extends State<LoginForm> {
             begin: Alignment.topRight,
             end: Alignment.bottomLeft,
             colors: [
-              Color(0xFF673AB7), // Start color
-              Color.fromRGBO(124, 77, 255, 1), // End color
+              Color(0xFFFFFFFF), // Blanco puro, color de inicio
+              Color(0xFFF7F7F7), // Gris muy claro, casi blanco, color de fin
             ],
           ),
         ),
