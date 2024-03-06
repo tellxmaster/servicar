@@ -1,4 +1,5 @@
 // Task: Formulario Registro de Citas
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:servicar_movil/src/models/rango_horario.dart';
@@ -34,11 +35,15 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
   List<Servicio> servicios = [];
   List<Trabajador> trabajadores = [];
   List<String> availableTimes = [];
+  late FirebaseAuth _auth2;
+  late String uid;
 
   @override
   void initState() {
     super.initState();
     cargarAreas();
+    _auth2 = FirebaseAuth.instance;
+    uid = _auth2.currentUser!.uid;
   }
 
   void cargarAreas() async {
@@ -88,7 +93,6 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
 
     final int duracionServicio = servicioSeleccionado.duracion;
 
-    // Obtén las citas existentes para el trabajador en la fecha seleccionada.
     final List<Cita> citasDelDia =
         await CitasController().obtenerCitasPorTrabajadorYFecha(
       selectedWorkerId!,
@@ -117,11 +121,19 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
     List<String> horaInicioPartes = partes[0].split(':');
     List<String> horaFinPartes = partes[1].split(':');
 
-    DateTime ahora = DateTime.now();
-    DateTime inicioDateTime = DateTime(ahora.year, ahora.month, ahora.day,
-        int.parse(horaInicioPartes[0]), int.parse(horaInicioPartes[1]));
-    DateTime finDateTime = DateTime(ahora.year, ahora.month, ahora.day,
-        int.parse(horaFinPartes[0]), int.parse(horaFinPartes[1]));
+    // Usa selectedDate en lugar de DateTime.now()
+    DateTime inicioDateTime = DateTime(
+        selectedDate!.year,
+        selectedDate!.month,
+        selectedDate!.day,
+        int.parse(horaInicioPartes[0]),
+        int.parse(horaInicioPartes[1]));
+    DateTime finDateTime = DateTime(
+        selectedDate!.year,
+        selectedDate!.month,
+        selectedDate!.day,
+        int.parse(horaFinPartes[0]),
+        int.parse(horaFinPartes[1]));
 
     Timestamp inicioTimestamp = Timestamp.fromDate(inicioDateTime);
     Timestamp finTimestamp = Timestamp.fromDate(finDateTime);
@@ -218,8 +230,9 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
                 begin: Alignment.topRight,
                 end: Alignment.bottomLeft,
                 colors: [
-                  Color(0xFF673AB7), // Start color
-                  Color.fromRGBO(124, 77, 255, 1), // End color
+                  Color(0xFFFFFFFF), // Blanco puro, color de inicio
+                  Color(
+                      0xFFF7F7F7), // Gris muy claro, casi blanco, color de fin
                 ],
               ),
             ),
@@ -353,7 +366,7 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
                                       idCita:
                                           '', // Este valor se actualizará después de crear la cita en Firestore
                                       idCliente:
-                                          'idCliente', // Deberás reemplazar esto con el ID real del cliente
+                                          uid, // Deberás reemplazar esto con el ID real del cliente
                                       idServicio:
                                           selectedServiceId!, // ID del servicio seleccionado
                                       idTrabajador:

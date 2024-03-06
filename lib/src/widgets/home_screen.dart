@@ -26,7 +26,10 @@ class HomeScreen extends StatelessWidget {
           children: <Widget>[
             const Text(
               'Bienvenido',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white),
             ),
             const SizedBox(height: 20),
             Image.asset(
@@ -41,7 +44,10 @@ class HomeScreen extends StatelessWidget {
                       EdgeInsets.symmetric(horizontal: 30.0, vertical: 10.0),
                   child: Text(
                     "Es necesario una cuenta para continuar",
-                    style: TextStyle(fontSize: 12, fontStyle: FontStyle.normal),
+                    style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.normal,
+                        color: Colors.white),
                   ),
                 ),
                 Padding(
@@ -54,7 +60,17 @@ class HomeScreen extends StatelessWidget {
                       onPressed: () => Navigator.of(context).push(
                           MaterialPageRoute(
                               builder: (context) => const LoginForm())),
-                      child: const Text('Ingresar'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            const Color(0xFF4CAF50), // Button background color
+                        padding: const EdgeInsets.symmetric(vertical: 15.0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(8), // Rounded corners
+                        ),
+                        elevation: 5, // Shadow depth
+                      ),
+                      child: const Text('INGRESAR'),
                     ),
                   ),
                 ),
@@ -68,7 +84,18 @@ class HomeScreen extends StatelessWidget {
                       onPressed: () => Navigator.of(context).push(
                           MaterialPageRoute(
                               builder: (context) => const RegisterForm())),
-                      child: const Text('Registrar'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            Colors.white, // Button background color
+                        foregroundColor: const Color(0xFF673AB7), // Text color
+                        padding: const EdgeInsets.symmetric(vertical: 15.0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(8), // Rounded corners
+                        ),
+                        elevation: 5, // Shadow depth
+                      ),
+                      child: const Text('REGISTRAR'),
                     ),
                   ),
                 ),

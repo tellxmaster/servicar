@@ -6,6 +6,17 @@ import '../models/usuario.dart';
 class UsuarioController extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+  Usuario? _currentUser;
+
+  Usuario? get currentUser => _currentUser;
+
+  Future<void> loadUser(String uid) async {
+    _currentUser = await obtenerUsuario(uid);
+    print("Instance of 'Usuario': ${_currentUser}");
+    print("Instance of 'Usuario': ${currentUser}");
+    notifyListeners();
+  }
+
   Future<void> registrarUsuario(String email, String password, String nombre,
       String apellido, String cedula, String celular) async {
     UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
@@ -20,7 +31,7 @@ class UsuarioController extends ChangeNotifier {
       correo: email,
       celular: celular,
       fechaCreacion: DateTime.now().toIso8601String(),
-      ultimaConexion: DateTime.now().toIso8601String(),
+      ultimaConexion: Timestamp.now(),
     );
 
     await _db.collection('usuarios').doc(uid).set(usuario.toJson());

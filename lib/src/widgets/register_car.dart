@@ -50,8 +50,9 @@ class _RegisterCarState extends State<RegisterCar> {
                 begin: Alignment.topRight,
                 end: Alignment.bottomLeft,
                 colors: [
-                  Color(0xFF673AB7), // Start color
-                  Color.fromRGBO(124, 77, 255, 1), // End color
+                  Color(0xFFFFFFFF), // Blanco puro, color de inicio
+                  Color(
+                      0xFFF7F7F7), // Gris muy claro, casi blanco, color de fin
                 ],
               ),
             ),
