@@ -48,6 +48,17 @@ class ServicioController with ChangeNotifier {
       throw Exception('Servicio no encontrado');
     }
   }
+  Future<Servicio> obtenerServicioPorId(String idServicio) async {
+    DocumentSnapshot doc = await _db.collection('servicios').doc(idServicio).get();
+
+    if (doc.exists) {
+      Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+      return Servicio.fromJson(data); // Utiliza el método fromJson de tu modelo Servicio
+    } else {
+      throw Exception('Servicio no encontrado');
+    }
+  }
+
 
   Future<String> obtenerNombreServicioPorId(String idServicio) async {
     try {

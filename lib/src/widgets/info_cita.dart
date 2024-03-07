@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:servicar_movil/src/controllers/cita_controller.dart';
 import 'package:servicar_movil/src/controllers/servicio_controller.dart';
 import 'package:servicar_movil/src/models/cita.dart';
+import 'package:servicar_movil/src/widgets/register_appointment.dart';
 
 class InfoCita extends StatefulWidget {
   final String id;
@@ -26,6 +27,24 @@ class _InfoCitaState extends State<InfoCita> {
 
     return formattedDate;
   }
+  void _handleEditar(BuildContext context) async {
+    final bool? updated = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (context) => RegisterAppointment(citaId: widget.id),
+      ),
+    );
+
+    // Si la cita se actualizó correctamente, recarga los datos.
+    if (updated == true) {
+      setState(() {
+        _detalleCita = _citaController.obtenerDetalleCita(widget.id);
+        _detalleCita.then((cita) {
+          _nombreServicio = ServicioController().obtenerNombreServicioPorId(cita.idServicio);
+        });
+      });
+    }
+  }
+
 
   void _handleCancelar(BuildContext context, String idCita) async {
     // Mostrar cuadro de diálogo de confirmación
@@ -191,7 +210,7 @@ class _InfoCitaState extends State<InfoCita> {
                             Expanded(
                               child: ElevatedButton(
                                 onPressed: () {
-                                  // Acción para editar
+                                  _handleEditar(context);
                                 },
                                 child: const Text('Editar'),
                               ),
