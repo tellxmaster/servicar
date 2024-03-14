@@ -414,6 +414,7 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
                                       fechaHoraFin: rangoHorario.fin,
                                       estado:
                                           'pendiente', // Estado inicial de la cita
+                                      evaluada: false,
                                     );
                                       if (widget.citaId != null) {
                                         // Estás editando una cita existente
@@ -439,7 +440,8 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
                                             const SnackBar(content: Text('Cita agendada con éxito')),
                                           );
                                           // Navegar de regreso al dashboard o la pantalla anterior
-                                          Navigator.of(context).pop(); // Ajusta según tu flujo de navegación
+                                          Navigator.of(context)
+                                          .pushNamed(DashboardScreen.routeName);
                                         }).catchError((error) {
                                           // Manejar el error
                                           ScaffoldMessenger.of(context).showSnackBar(

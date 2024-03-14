@@ -11,6 +11,7 @@ import 'package:servicar_movil/src/widgets/home_screen.dart';
 import 'package:servicar_movil/src/widgets/login_form.dart';
 import 'package:servicar_movil/src/widgets/register_appointment.dart';
 import 'package:servicar_movil/src/widgets/register_car.dart';
+import 'package:servicar_movil/src/widgets/register_evaluation.dart';
 import 'package:servicar_movil/src/widgets/register_form.dart';
 import 'package:servicar_movil/src/widgets/splash_screen.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -84,7 +85,9 @@ class MyApp extends StatelessWidget {
             RegisterCar.routeName: (context) => const RegisterCar(),
             DashboardScreen.routeName: (context) => const DashboardScreen(),
             RegisterAppointment.routeName: (context) =>
-                const RegisterAppointment()
+                const RegisterAppointment(),
+            RegisterEvaluation.routeName: (context) =>
+                const RegisterEvaluation(),
           }),
     );
   }
