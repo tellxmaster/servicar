@@ -14,6 +14,7 @@ class Cita {
   Timestamp fechaHoraInicio;
   Timestamp fechaHoraFin;
   String estado;
+  bool evaluada;
 
   Cita({
     required this.idCita,
@@ -23,6 +24,7 @@ class Cita {
     required this.fechaHoraInicio,
     required this.fechaHoraFin,
     required this.estado,
+    required this.evaluada,
   });
 
   factory Cita.fromJson(Map<String, dynamic> json) => Cita(
@@ -33,6 +35,7 @@ class Cita {
         fechaHoraInicio: json["fechaHoraInicio"],
         fechaHoraFin: json["fechaHoraFin"],
         estado: json["estado"],
+        evaluada: json["evaluada"],
       );
 
   String? get idArea => null;
@@ -45,5 +48,6 @@ class Cita {
         "fechaHoraInicio": fechaHoraInicio,
         "fechaHoraFin": fechaHoraFin,
         "estado": estado,
+        "evaluada":evaluada
       };
 }

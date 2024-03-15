@@ -5,6 +5,7 @@ import 'package:servicar_movil/src/controllers/cita_controller.dart';
 import 'package:servicar_movil/src/controllers/servicio_controller.dart';
 import 'package:servicar_movil/src/models/cita.dart';
 import 'package:servicar_movil/src/widgets/register_appointment.dart';
+import 'package:servicar_movil/src/widgets/register_evaluation.dart';
 
 class InfoCita extends StatefulWidget {
   final String id;
@@ -44,6 +45,45 @@ class _InfoCitaState extends State<InfoCita> {
       });
     }
   }
+  void _handleEvaluarCita(BuildContext context) async {
+    // Primero, obtener los detalles de la cita para verificar si ya fue evaluada
+    _citaController.obtenerDetalleCita(widget.id).then((cita) {
+      if (cita.evaluada) {
+        // Si la cita ya ha sido evaluada, mostrar un diálogo/alerta
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text("Evaluación ya realizada"),
+              content: const Text("Esta cita ya ha sido evaluada."),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text("Aceptar"),
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Cierra el diálogo
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      } else {
+        // Si la cita no ha sido evaluada, permitir evaluar
+        Navigator.of(context).push<bool>(
+          MaterialPageRoute(
+            builder: (context) => RegisterEvaluation(citaId: widget.id),
+          ),
+        );
+      }
+    }).catchError((error) {
+      // Manejar errores, por ejemplo, mostrar un Snackbar
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Error al verificar la cita: $error'),
+        backgroundColor: Colors.red,
+      ));
+    });
+  }
+
 
 
   void _handleCancelar(BuildContext context, String idCita) async {
@@ -228,6 +268,23 @@ class _InfoCitaState extends State<InfoCita> {
                               ),
                             ),
                           ],
+                        ),
+                        const SizedBox(height: 20),
+                        ElevatedButton(
+                                onPressed: () {
+                                  _handleEvaluarCita(
+                                      context);
+                                },
+                              style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 15.0,horizontal: 20.0),
+                                  backgroundColor: Colors.amber,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(8), // Rounded corners
+                                  ),
+                                  elevation: 5, // Shadow depth
+                                ),
+                                child: const Text('Evaluar Cita'),
                         ),
                       ],
                     ),
