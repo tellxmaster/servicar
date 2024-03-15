@@ -35,7 +35,7 @@ class Cita {
         fechaHoraInicio: json["fechaHoraInicio"],
         fechaHoraFin: json["fechaHoraFin"],
         estado: json["estado"],
-        evaluada: json["evaluada"],
+        evaluada: json["evaluada"] ?? false,
       );
 
   String? get idArea => null;

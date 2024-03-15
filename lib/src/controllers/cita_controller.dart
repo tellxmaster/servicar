@@ -218,6 +218,7 @@ class CitasController extends ChangeNotifier {
       cita['nombreServicio'] = nombreServicio;
       cita['nombreCliente'] = nombreCliente;
       cita['nombreTrabajador'] = nombreTrabajador;
+      print(cita['idCita']);
 
       return cita;
     }).toList();

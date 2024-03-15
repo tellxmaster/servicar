@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:servicar_movil/src/controllers/cita_controller.dart';
 import 'package:servicar_movil/src/controllers/usuario_controller.dart';
 import 'package:servicar_movil/src/widgets/home_screen.dart';
+import 'package:servicar_movil/src/widgets/info_cita.dart';
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({Key? key}) : super(key: key);
@@ -17,6 +18,12 @@ class _AdminScreenState extends State<AdminScreen> {
   final CitasController _citasController = CitasController();
   Future<List<Map<String, dynamic>>>? _citasDetailsFuture;
   final UsuarioController _usuarioController = UsuarioController();
+
+void _goToInfoCita(String cita) async {
+    bool updated = await Navigator.of(context)
+        .push(MaterialPageRoute(builder: (context) => InfoCita(id: cita)));
+
+  }
 
   @override
   void initState() {
@@ -80,33 +87,35 @@ class _AdminScreenState extends State<AdminScreen> {
                 ),
                 Expanded(
                   child: ListView.builder(
-                    itemCount: citasDetails.length,
-                    itemBuilder: (context, index) {
-                      Map<String, dynamic> citaDetail = citasDetails[index];
-                      String formattedDate =
-                          DateFormat('dd/MM/yyyy h:mm a').format(
-                        (citaDetail['fechaHoraInicio'] as Timestamp).toDate(),
-                      );
+  itemCount: citasDetails.length,
+  itemBuilder: (context, index) {
+    Map<String, dynamic> citaDetail = citasDetails[index];
+    String formattedDate = DateFormat('dd/MM/yyyy h:mm a').format(
+      (citaDetail['fechaHoraInicio'] as Timestamp).toDate(),
+    );
+    String idCita = citaDetail['idCita']; // Asegúrate de tener este valor disponible
+    print(idCita);
+    return InkWell(
+      onTap: () => _goToInfoCita(idCita), // Usando el ID de la cita aquí
+      child: Card(
+        margin: const EdgeInsets.all(8.0),
+        child: ListTile(
+          leading: const Icon(Icons.calendar_month_sharp),
+          title: Text(
+            citaDetail['nombreServicio'] ?? 'Servicio desconocido',
+          ),
+          subtitle: Text(
+            '${citaDetail['nombreCliente'] ?? 'Cliente desconocido'} - $formattedDate',
+          ),
+          trailing: Text(
+            citaDetail['nombreTrabajador'] ?? 'Trabajador desconocido',
+          ),
+        ),
+      ),
+    );
+  },
+),
 
-                      return Card(
-                        margin: const EdgeInsets.all(8.0),
-                        child: ListTile(
-                          leading: const Icon(Icons.calendar_month_sharp),
-                          title: Text(
-                            citaDetail['nombreServicio'] ??
-                                'Servicio desconocido',
-                          ),
-                          subtitle: Text(
-                            '${citaDetail['nombreCliente'] ?? 'Cliente desconocido'} - $formattedDate',
-                          ),
-                          trailing: Text(
-                            citaDetail['nombreTrabajador'] ??
-                                'Trabajador desconocido',
-                          ),
-                        ),
-                      );
-                    },
-                  ),
                 ),
               ],
             );

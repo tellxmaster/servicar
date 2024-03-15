@@ -16,7 +16,6 @@ import 'package:servicar_movil/src/widgets/register_evaluation.dart';
 import 'package:servicar_movil/src/widgets/register_form.dart';
 import 'package:servicar_movil/src/widgets/splash_screen.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:servicar_movil/src/widgets/taller_map_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -80,7 +79,7 @@ class MyApp extends StatelessWidget {
             ),
             // Aquí puedes añadir personalizaciones adicionales según necesites
           ),
-          home: const TallerMapPage(),
+          home: const SplashScreen(),
           routes: {
             LoginForm.routeName: (context) => const LoginForm(),
             HomeScreen.routeName: (context) => const HomeScreen(),

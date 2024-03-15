@@ -158,6 +158,14 @@ class _InfoCitaState extends State<InfoCita> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Detalles de la Cita'),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            // Al presionar la flecha de atrás, se retorna false a la página anterior.
+            Navigator.of(context).pop(false);
+          },
+        ),
+        // El resto de tu AppBar como acciones, título, etc.
       ),
       body: FutureBuilder<Cita>(
         future: _detalleCita,

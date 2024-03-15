@@ -12,6 +12,7 @@ import 'package:servicar_movil/src/widgets/home_screen.dart';
 import 'package:servicar_movil/src/widgets/info_cita.dart';
 import 'package:servicar_movil/src/widgets/register_appointment.dart';
 import 'package:intl/intl.dart';
+import 'package:servicar_movil/src/widgets/taller_map_page.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -133,9 +134,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
               appBar: AppBar(
                 title: const Text('ServiCar'),
                 centerTitle: true,
-                leading: IconButton(
-                  icon: Image.asset('assets/logo.png'),
-                  onPressed: () {},
+                leading: Builder(
+                  builder: (BuildContext context) {
+                    return IconButton(
+                      icon: Image.asset('assets/logo.png'),
+                      onPressed: () {
+                        Scaffold.of(context).openDrawer();
+                      },
+                      tooltip: MaterialLocalizations.of(context)
+                          .openAppDrawerTooltip,
+                    );
+                  },
                 ),
                 actions: [
                   IconButton(
@@ -155,6 +164,84 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     },
                   )
                 ],
+              ),
+              drawer: Drawer(
+                child: ListView(
+                  padding: EdgeInsets.zero,
+                  children: <Widget>[
+                    DrawerHeader(
+                      decoration: const BoxDecoration(color: Color(0xFF673AB7)),
+                      child: Stack(
+                        children: <Widget>[
+                          Align(
+                            alignment: Alignment.center,
+                            child: Image.asset(
+                              'assets/logo.png', // Tu logo aquí
+                              width: 80.0,
+                              height: 80.0,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                          Align(
+                            alignment: Alignment.bottomLeft,
+                            child: Column(
+                              mainAxisSize: MainAxisSize
+                                  .min, // Esto hace que la Columna ocupe solo el espacio necesario.
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Bienvenido', // Accede directamente al email del usuario
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18.0,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  '${FirebaseAuth.instance.currentUser?.email}', // Accede directamente al email del usuario
+                                  style: const TextStyle(
+                                    color: Color.fromARGB(255, 0, 217, 255),
+                                    fontSize: 16.0,
+                                    fontWeight: FontWeight.normal,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.location_on_rounded),
+                      title: Text('Ubicaciòn del taller'),
+                      onTap: () {
+                        // Navega a TallerMapPage cuando el tile es tocado
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => TallerMapPage()),
+                        );
+                      },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.logout),
+                      title: Text("Cerrar Sesiòn"),
+                      onTap: () {
+                        _usuarioController.cerrarSesion(context).then((_) {
+                          Navigator.of(context)
+                              .pushReplacementNamed(HomeScreen.routeName);
+                        }).catchError((error) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Ocurrió un error'),
+                              backgroundColor: Color(0xFFdc3545),
+                            ),
+                          );
+                        });
+                      },
+                    )
+                  ],
+                ),
               ),
               body: SingleChildScrollView(
                 child: Container(
