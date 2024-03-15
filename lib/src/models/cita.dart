@@ -35,6 +35,8 @@ class Cita {
         estado: json["estado"],
       );
 
+  String? get idArea => null;
+
   Map<String, dynamic> toJson() => {
         "idCita": idCita,
         "idCliente": idCliente,

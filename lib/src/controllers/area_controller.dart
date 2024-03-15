@@ -18,4 +18,19 @@ class AreaController with ChangeNotifier {
       throw Exception('Error al obtener áreas');
     }
   }
+  Future<Area> obtenerAreaPorId(String idArea) async {
+    try {
+      DocumentSnapshot doc = await _db.collection('areas').doc(idArea).get();
+      if (doc.exists) {
+        Area area = Area.fromJson(doc.data() as Map<String, dynamic>);
+        return area;
+      } else {
+        throw Exception('El área no existe');
+      }
+    } catch (e) {
+      print(e.toString());
+      throw Exception('Error al obtener el área: ${e.toString()}');
+    }
+  }
+
 }

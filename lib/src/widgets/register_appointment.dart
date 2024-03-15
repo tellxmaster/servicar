@@ -17,9 +17,10 @@ import 'package:servicar_movil/src/widgets/date_picker_form_field.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class RegisterAppointment extends StatefulWidget {
+  final String? citaId; // ID de la cita para edición, null si es nueva cita.
   static const String routeName = '/register_appointment';
 
-  const RegisterAppointment({super.key});
+  const RegisterAppointment({super.key, this.citaId});
 
   @override
   State<RegisterAppointment> createState() => _RegisterAppointmentState();
@@ -40,22 +41,54 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
 
   @override
   void initState() {
+    inicializarFormulario();
     super.initState();
-    cargarAreas();
     _auth2 = FirebaseAuth.instance;
     uid = _auth2.currentUser!.uid;
+    
+  }
+  Future<void> inicializarFormulario() async {
+    await cargarAreas(); // Asegúrate de que esta operación se complete antes de proceder
+
+    if (widget.citaId != null) {
+      await cargarDatosCitaExistente(); // Espera a que los datos de la cita existente se carguen si es necesario
+    }
+    // No necesitas llamar a cargarAreas() aquí de nuevo ya que se llama al principio
   }
 
-  void cargarAreas() async {
-    areas = await AreaController()
-        .obtenerAreas(); // Asume que este método existe y funciona correctamente
+  Future<void> cargarDatosCitaExistente() async {
+    // Asegúrate de que este método cargue y actualice correctamente los estados relacionados con la cita
+    final cita = await CitasController().obtenerDetalleCita(widget.citaId!);
+    final Servicio servicio =  
+    await ServicioController().obtenerServicioPorId(cita.idServicio);
+    // Ahora que tienes el servicio, puedes obtener el área
+    final Area area = await AreaController().obtenerAreaPorId(servicio.idArea);
+
+    setState(() {
+      // Actualiza el estado del formulario con los datos de la cita
+      print("Fecha inicial: $selectedDate");
+      selectedDate = cita.fechaHoraInicio.toDate();
+      selectedAreaId = area.idArea;
+      selectedServiceId = cita.idServicio;
+      selectedWorkerId = cita.idTrabajador;
+      print("Fecha configurada: $selectedDate");
+      // Continúa actualizando el resto de los campos necesarios
+      // Luego de establecer el área, deberías cargar los servicios y trabajadores para esa área específica
+      // Asegúrate de que estas llamadas también actualicen el estado según sea necesario
+    });
+    cargarServiciosPorArea(selectedAreaId!);
+    cargarTrabajadoresPorArea(selectedAreaId!);
+  }
+
+  Future<void> cargarAreas() async {
+    areas = await AreaController().obtenerAreas();
     if (areas.isNotEmpty) {
-      selectedAreaId =
-          areas.first.idArea; // Selecciona por defecto el primer área
-      cargarServiciosPorArea(selectedAreaId!);
-      cargarTrabajadoresPorArea(selectedAreaId!);
+      setState(() {
+        selectedAreaId = areas.first.idArea;
+        // Nota: Aquí solo estableces el área por defecto. Las llamadas para cargar servicios y trabajadores
+        // no deberían estar aquí si dependen del ID de una cita existente, esas llamadas se mueven a cargarDatosCitaExistente()
+      });
     }
-    setState(() {});
   }
 
   void cargarServiciosPorArea(String idArea) async {
@@ -318,11 +351,17 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
 
                         const SizedBox(height: 20),
                         // Selector de fecha
+                        
                         DatePickerFormField(
+                          initialDate: selectedDate ?? DateTime.now(),
                           onDateSelected: (DateTime date) {
                             // Aquí puedes manejar la fecha seleccionada, por ejemplo, actualizar el estado del componente padre
-                            selectedDate = date;
-                            calcularHorariosDisponibles();
+                           setState(() {
+                              selectedDate = date;
+                              calcularHorariosDisponibles();
+                            });
+                            // Agrega setState aquí para asegurarte de que el DatePickerFormField se actualice
+                          
                           },
                         ),
                         const SizedBox(height: 20),
@@ -364,7 +403,7 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
                                     // Crear el objeto Cita
                                     Cita cita = Cita(
                                       idCita:
-                                          '', // Este valor se actualizará después de crear la cita en Firestore
+                                          widget.citaId ?? '', // Este valor se actualizará después de crear la cita en Firestore
                                       idCliente:
                                           uid, // Deberás reemplazar esto con el ID real del cliente
                                       idServicio:
@@ -376,34 +415,39 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
                                       estado:
                                           'pendiente', // Estado inicial de la cita
                                     );
-
-                                    // Llamar a la función para crear la cita en Firestore
-                                    await CitasController()
-                                        .crearCita(cita)
-                                        .then((_) {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                          content:
-                                              Text('Cita agendada con éxito'),
-                                          backgroundColor: Color(0xFF28A745),
-                                        ),
-                                      );
-                                      Navigator.of(context)
+                                      if (widget.citaId != null) {
+                                        // Estás editando una cita existente
+                                        await CitasController().editarCita(cita).then((_) {
+                                          // Mostrar un mensaje de éxito
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text('Cita actualizada con éxito')),
+                                          );
+                                          // Navegar de regreso al dashboard o la pantalla anterior
+                                         Navigator.of(context)
                                           .pushNamed(DashboardScreen.routeName);
-                                    }).catchError((error) {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                              'Ocurrió un error: $error'), // Mostrar el error puede ser útil
-                                          backgroundColor:
-                                              const Color(0xFFdc3545),
-                                        ),
-                                      );
-                                    });
-                                  }
-                                : null,
+                                        }).catchError((error) {
+                                          // Manejar el error, por ejemplo, mostrando un mensaje
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text('Error al actualizar la cita: $error')),
+                                          );
+                                        });
+                                      } else {
+                                        // Crear una nueva cita
+                                        await CitasController().crearCita(cita).then((_) {
+                                          // Mostrar un mensaje de éxito
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text('Cita agendada con éxito')),
+                                          );
+                                          // Navegar de regreso al dashboard o la pantalla anterior
+                                          Navigator.of(context).pop(); // Ajusta según tu flujo de navegación
+                                        }).catchError((error) {
+                                          // Manejar el error
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text('Error al crear la cita: $error')),
+                                          );
+                                        });
+                                      }
+                                    } : null,
                             child: const Text('AGENDAR'),
                           ),
                         ),

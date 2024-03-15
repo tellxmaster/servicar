@@ -5,8 +5,8 @@ import 'package:intl/intl.dart';
 class DatePickerFormField extends StatefulWidget {
   final Function(DateTime)
       onDateSelected; // El callback que se invocará con la nueva fecha
-
-  const DatePickerFormField({super.key, required this.onDateSelected});
+  final DateTime initialDate; // Añadido para aceptar una fecha inicial
+  const DatePickerFormField({super.key, required this.onDateSelected, required this.initialDate});
 
   @override
   State<DatePickerFormField> createState() => _DatePickerFormFieldState();
@@ -14,12 +14,13 @@ class DatePickerFormField extends StatefulWidget {
 
 class _DatePickerFormFieldState extends State<DatePickerFormField> {
   late TextEditingController _controller;
-  DateTime selectedDate = DateTime.now();
+  late DateTime selectedDate = DateTime.now();
 
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController();
+     selectedDate = widget.initialDate; // Usar la fecha inicial del widget
+    _controller = TextEditingController(text: DateFormat('yyyy-MM-dd').format(widget.initialDate));
   }
 
   Future<void> _selectDate(BuildContext context) async {
