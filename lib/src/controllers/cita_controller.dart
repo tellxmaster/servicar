@@ -46,6 +46,58 @@ class CitasController extends ChangeNotifier {
     }
   }
 
+  Future<void> verificarCitasYEnviarRecordatorios() async {
+    final User? usuarioActual = FirebaseAuth.instance.currentUser;
+    final String? emailDestinatario = usuarioActual?.email;
+
+    if (emailDestinatario == null) {
+      print("No hay un usuario autenticado.");
+      return;
+    }
+
+    // Obtener la fecha y hora actuales
+    final DateTime now = DateTime.now();
+    // Calcular 4 horas después del momento actual
+    final DateTime fourHoursFromNow = now.add(Duration(hours: 4));
+
+    // Obtener citas próximas dentro de las próximas 4 horas
+    final QuerySnapshot citasSnapshot = await _db
+        .collection('citas')
+        .where('fechaHoraInicio', isGreaterThanOrEqualTo: now)
+        .where('fechaHoraInicio', isLessThan: fourHoursFromNow)
+        .get();
+
+    for (var doc in citasSnapshot.docs) {
+      final Map<String, dynamic> citaData = doc.data() as Map<String, dynamic>;
+      final Cita cita = Cita.fromJson(citaData);
+
+      // Obtener el documento del servicio basado en el idServicio
+      DocumentSnapshot servicioDoc =
+          await _db.collection('servicios').doc(cita.idServicio).get();
+      if (!servicioDoc.exists) {
+        print("Documento de servicio no encontrado.");
+        continue;
+      }
+      // Decodificar el documento a una instancia de Servicio
+      final Servicio servicio =
+          Servicio.fromJson(servicioDoc.data() as Map<String, dynamic>);
+
+      // Construir el mensaje del correo electrónico
+      String asunto = "Recordatorio de Cita";
+      String mensaje =
+          "Estimado $emailDestinatario, le recordamos que su cita para ${servicio.nombre} es dentro de menos de 4 horas, a las ${cita.fechaHoraInicio.toDate()}.";
+
+      // Crear el item en la colección 'mail' para el Trigger Email
+      await _db.collection('mail').add({
+        'to': emailDestinatario,
+        'message': {
+          'subject': asunto,
+          'text': mensaje,
+        },
+      });
+    }
+  }
+
   // Método para editar una cita existente
   Future<void> editarCita(Cita cita) async {
     await _db.collection('citas').doc(cita.idCita).update(cita.toJson());
@@ -130,5 +182,46 @@ class CitasController extends ChangeNotifier {
       // Opcionalmente, puedes lanzar una excepción personalizada o devolver una lista vacía.
       throw Exception('Error al obtener las citas: $e');
     }
+  }
+
+  Future<List<Map<String, dynamic>>> getAllCitasDetails() async {
+    QuerySnapshot citasSnapshot = await _db.collection('citas').get();
+
+    List<Future<Map<String, dynamic>>> citasDetailsFutures =
+        citasSnapshot.docs.map((doc) async {
+      Map<String, dynamic> cita = doc.data() as Map<String, dynamic>;
+
+      // Obtener el nombre del servicio
+      DocumentSnapshot servicioSnapshot =
+          await _db.collection('servicios').doc(cita['idServicio']).get();
+      Map<String, dynamic>? servicioData =
+          servicioSnapshot.data() as Map<String, dynamic>?;
+      String nombreServicio = servicioData?['nombre'] ?? 'Desconocido';
+
+      // Obtener el nombre del cliente
+      DocumentSnapshot clienteSnapshot =
+          await _db.collection('usuarios').doc(cita['idCliente']).get();
+      Map<String, dynamic>? clienteData =
+          clienteSnapshot.data() as Map<String, dynamic>?;
+      String nombreCliente = clienteData != null
+          ? "${clienteData['nombre']} ${clienteData['apellido']}"
+          : 'Desconocido';
+
+      // Obtener el nombre del trabajador
+      DocumentSnapshot trabajadorSnapshot =
+          await _db.collection('trabajadores').doc(cita['idTrabajador']).get();
+      Map<String, dynamic>? trabajadorData =
+          trabajadorSnapshot.data() as Map<String, dynamic>?;
+      String nombreTrabajador = trabajadorData?['nombre'] ?? 'Desconocido';
+
+      // Agrega la información al mapa de la cita
+      cita['nombreServicio'] = nombreServicio;
+      cita['nombreCliente'] = nombreCliente;
+      cita['nombreTrabajador'] = nombreTrabajador;
+
+      return cita;
+    }).toList();
+
+    return await Future.wait(citasDetailsFutures);
   }
 }

@@ -12,8 +12,6 @@ class UsuarioController extends ChangeNotifier {
 
   Future<void> loadUser(String uid) async {
     _currentUser = await obtenerUsuario(uid);
-    print("Instance of 'Usuario': ${_currentUser}");
-    print("Instance of 'Usuario': ${currentUser}");
     notifyListeners();
   }
 
@@ -37,13 +35,21 @@ class UsuarioController extends ChangeNotifier {
     await _db.collection('usuarios').doc(uid).set(usuario.toJson());
   }
 
-  Future<void> autenticarUsuario(String email, String password) async {
+  Future<Usuario> autenticarUsuario(String email, String password) async {
     UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: email, password: password);
     await _db
         .collection('usuarios')
         .doc(userCredential.user!.uid)
         .update({'ultimaConexion': DateTime.now()});
+    // Obtener los datos del usuario desde Firestore
+    DocumentSnapshot<Map<String, dynamic>> usuarioSnap =
+        await _db.collection('usuarios').doc(userCredential.user!.uid).get();
+
+    // Crear una instancia de Usuario a partir de los datos de Firestore
+    Usuario usuario = Usuario.fromJson(usuarioSnap.data()!);
+
+    return usuario;
   }
 
   Future<void> actualizarUsuario(Usuario usuario) async {

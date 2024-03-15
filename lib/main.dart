@@ -6,6 +6,7 @@ import 'package:servicar_movil/src/controllers/automovil_controller.dart';
 import 'package:servicar_movil/src/controllers/cita_controller.dart';
 import 'package:servicar_movil/src/controllers/servicio_controller.dart';
 import 'package:servicar_movil/src/controllers/usuario_controller.dart';
+import 'package:servicar_movil/src/widgets/admin_screen.dart';
 import 'package:servicar_movil/src/widgets/dashboard_screen.dart';
 import 'package:servicar_movil/src/widgets/home_screen.dart';
 import 'package:servicar_movil/src/widgets/login_form.dart';
@@ -23,6 +24,7 @@ void main() async {
   initializeDateFormatting('es_ES', null).then((_) {
     runApp(const MyApp());
   });
+  
 }
 
 class MyApp extends StatelessWidget {
@@ -37,7 +39,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AutomovilController()),
         ChangeNotifierProvider(create: (_) => CitasController()),
         ChangeNotifierProvider(create: (_) => ServicioController()),
-      ],
+      ], 
       child: MaterialApp(
           title: 'ServiCar',
           debugShowCheckedModeBanner: false,
@@ -83,6 +85,7 @@ class MyApp extends StatelessWidget {
             RegisterForm.routeName: (context) => const RegisterForm(),
             RegisterCar.routeName: (context) => const RegisterCar(),
             DashboardScreen.routeName: (context) => const DashboardScreen(),
+            AdminScreen.routeName: (context)=> const AdminScreen(),
             RegisterAppointment.routeName: (context) =>
                 const RegisterAppointment()
           }),

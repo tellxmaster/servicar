@@ -1,9 +1,7 @@
 import 'dart:convert';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 Usuario usuarioFromJson(String str) => Usuario.fromJson(json.decode(str));
-
 String usuarioToJson(Usuario data) => json.encode(data.toJson());
 
 class Usuario {
@@ -15,6 +13,7 @@ class Usuario {
   String celular;
   String fechaCreacion;
   Timestamp ultimaConexion;
+  String rol;  // Nuevo campo agregado
 
   Usuario({
     required this.uid,
@@ -25,6 +24,7 @@ class Usuario {
     required this.celular,
     required this.fechaCreacion,
     required this.ultimaConexion,
+    this.rol = 'cliente',  // Valor predeterminado asignado aquí
   });
 
   factory Usuario.fromJson(Map<String, dynamic> json) => Usuario(
@@ -34,8 +34,9 @@ class Usuario {
         cedula: json["cedula"],
         correo: json["correo"],
         celular: json["celular"],
-        fechaCreacion:json["fechaCreacion"],
+        fechaCreacion: json["fechaCreacion"],
         ultimaConexion: json["ultimaConexion"] ?? Timestamp.now(),
+        rol: json["rol"] ?? 'cliente',
       );
 
   Map<String, dynamic> toJson() => {
@@ -47,5 +48,6 @@ class Usuario {
         "celular": celular,
         "fechaCreacion": fechaCreacion,
         "ultimaConexion": ultimaConexion,
+        "rol": rol,  // Asegurarse de incluir el rol al convertir a JSON
       };
 }
