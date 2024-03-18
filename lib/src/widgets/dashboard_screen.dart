@@ -38,7 +38,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String formatTimestamp(Timestamp timestamp) {
     DateTime date = timestamp.toDate();
     // Formatea la fecha como prefieras. Ejemplo: 20 de enero de 2024, 5:00 PM
-    String formattedDate = DateFormat('h:mm a', 'es_ES').format(date);
+    String formattedDate = DateFormat('EEEE, h:mm a', 'es_ES').format(date);
 
     return formattedDate;
   }
@@ -270,7 +270,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           const SizedBox(height: 20),
                           _quotesDataCard(context),
                           const SizedBox(height: 20),
-                          _technicalDataSection(),
+                          //_technicalDataSection(),
                         ],
                       ),
                     ],

@@ -150,40 +150,69 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
     availableTimes = filtrarHorariosDisponibles(
         horariosTrabajo, citasDelDia, duracionServicio);
 
-    setState(() {});
+    setState(() {
+      availableTimes = availableTimes;
+    });
   }
 
   RangoHorario convertirRangoATimestamps(String rangoHorario) {
-    // Intenta parsear las fechas y manejar cualquier error que pueda ocurrir
-    try {
-      // Dividir el rango en hora de inicio y fin basado en el nuevo formato
-      List<String> partes = rangoHorario.split(' - ');
-      if (partes.length != 2) {
-        throw FormatException('El rango horario no tiene el formato correcto.');
-      }
+    print(rangoHorario);
+    List<String> partes = rangoHorario.split(' - ');
 
-      // Especificar el formato de fecha y hora
-      DateFormat formato = DateFormat("EEE, d MMM HH:mm yyyy", "en_US_POSIX");
+    // Extracción de la fecha y hora de inicio
+    List<String> inicioPartes = partes[0].split(' ');
+    List<String> horaInicioPartes = inicioPartes[3].split(':');
 
-      DateTime inicioDateTime = formato.parse(partes[0], true).toLocal();
-      DateTime finDateTime = formato.parse(partes[1], true).toLocal();
+    // Extracción de la fecha y hora de fin (opcional, si la fecha podría ser diferente)
+    List<String> finPartes = partes[1].split(' ');
+    List<String> horaFinPartes = finPartes[3].split(':');
 
-      // Ajustar la fecha de fin si es necesario
-      if (finDateTime.isBefore(inicioDateTime)) {
-        finDateTime = DateTime(finDateTime.year, finDateTime.month,
-            inicioDateTime.day + 1, finDateTime.hour, finDateTime.minute);
-      }
+    // Parseo de la fecha. Asume que el año es el año actual. Ajusta según sea necesario.
+    DateTime now = DateTime.now();
+    DateTime inicioDateTime = DateTime.parse(
+        '${now.year}-${mesANumero(inicioPartes[2])}-${inicioPartes[1]} ${horaInicioPartes[0]}:${horaInicioPartes[1]}:00');
+    DateTime finDateTime = DateTime.parse(
+        '${now.year}-${mesANumero(finPartes[2])}-${finPartes[1]} ${horaFinPartes[0]}:${horaFinPartes[1]}:00');
 
-      Timestamp inicioTimestamp = Timestamp.fromDate(inicioDateTime);
-      Timestamp finTimestamp = Timestamp.fromDate(finDateTime);
+    print(inicioDateTime);
+    print(finDateTime);
+    Timestamp inicioTimestamp = Timestamp.fromDate(inicioDateTime);
+    Timestamp finTimestamp = Timestamp.fromDate(finDateTime);
+    print(Timestamp.fromDate(inicioDateTime));
+    print(Timestamp.fromDate(finDateTime));
 
-      print('Inicio Timestamp: ${inicioTimestamp.toString()}');
-      print('Fin Timestamp: ${finTimestamp.toString()}');
+    return RangoHorario(inicio: inicioTimestamp, fin: finTimestamp);
+  }
 
-      return RangoHorario(inicio: inicioTimestamp, fin: finTimestamp);
-    } catch (e) {
-      print('Error al convertir rango horario: $e');
-      rethrow; // Propagar el error si es necesario.
+// Función auxiliar para convertir el mes de texto a número
+  String mesANumero(String mes) {
+    switch (mes) {
+      case 'Jan':
+        return '01';
+      case 'Feb':
+        return '02';
+      case 'Mar':
+        return "03";
+      case 'Apr':
+        return "04";
+      case 'May':
+        return "05";
+      case 'Jun':
+        return "06";
+      case 'Jul':
+        return "07";
+      case 'Aug':
+        return "08";
+      case 'Sep':
+        return "09";
+      case 'Oct':
+        return "10";
+      case 'Nov':
+        return "11";
+      case 'Dec':
+        return "12";
+      default:
+        return "01"; // Por defecto o en caso de error, retorna enero
     }
   }
 
@@ -216,13 +245,20 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
   List<String> filtrarHorariosDisponibles(List<String> horariosTrabajo,
       List<Cita> citasDelDia, int duracionServicio) {
     List<String> horariosDisponibles = [];
+    DateTime now = DateTime.now(); // Obtener el año actual
     for (var horario in horariosTrabajo) {
       bool esDisponible = true;
       final partesHorario = horario.split(' - ');
+
+      // Añadir el año actual a la cadena de fecha para parsear correctamente
+      String fechaInicioConAnio = '${partesHorario[0]} ${now.year}';
+      String fechaFinConAnio = '${partesHorario[1]} ${now.year}';
+
+      // Asegurarse de que se incluye el año en el formato de fecha
       final fechaHoraInicioHorario =
-          DateFormat('E, d MMM HH:mm').parse(partesHorario[0], true);
+          DateFormat('E, d MMM HH:mm yyyy').parse(fechaInicioConAnio, true);
       final fechaHoraFinHorario =
-          DateFormat('E, d MMM HH:mm').parse(partesHorario[1], true);
+          DateFormat('E, d MMM HH:mm yyyy').parse(fechaFinConAnio, true);
 
       for (var cita in citasDelDia) {
         DateTime inicioCita = cita.fechaHoraInicio.toDate();
@@ -237,6 +273,28 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
       if (esDisponible) {
         horariosDisponibles.add(horario);
       }
+    }
+
+    if (horariosDisponibles.isEmpty) {
+      // No hay horarios disponibles, mostrar dialog
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text("No hay turnos disponibles"),
+            content: Text(
+                "Parece que no tenemos turnos disponibles para ese día :(\nPor favor, selecciona otra fecha."),
+            actions: <Widget>[
+              TextButton(
+                child: const Text("Cerrar"),
+                onPressed: () {
+                  Navigator.of(context).pop(); // Cierra el dialog
+                },
+              ),
+            ],
+          );
+        },
+      );
     }
     return horariosDisponibles;
   }
@@ -328,6 +386,25 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
                         ),
 
                         const SizedBox(height: 20),
+                        // Selector de fecha
+
+                        DatePickerFormField(
+                          controller: dateController,
+                          onDateSelected: (DateTime date) {
+                            setState(() {
+                              selectedDate = date;
+                              // Establece availableTimes como vacío para reflejar el cambio de fecha
+                              availableTimes = [];
+                              // Aquí asumo que tienes una función que recalculará los horarios disponibles
+                              // basados en la nueva fecha seleccionada y actualizará el estado adecuadamente.
+                              if (selectedWorkerId != "") {
+                                calcularHorariosDisponibles();
+                              }
+                            });
+                          },
+                        ),
+
+                        const SizedBox(height: 20),
                         // Dropdown para seleccionar el trabajador
                         DropdownButtonFormField<String>(
                           value: selectedWorkerId,
@@ -357,19 +434,6 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
                             labelText: 'Trabajador',
                             prefixIcon: Icon(Icons.work),
                           ),
-                        ),
-
-                        const SizedBox(height: 20),
-                        // Selector de fecha
-
-                        DatePickerFormField(
-                          controller: dateController,
-                          onDateSelected: (DateTime date) {
-                            setState(() {
-                              selectedDate = date;
-                              // Actualiza cualquier otro estado necesario aquí
-                            });
-                          },
                         ),
 
                         const SizedBox(height: 20),
