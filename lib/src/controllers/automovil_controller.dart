@@ -7,8 +7,8 @@ class AutomovilController with ChangeNotifier {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   Future<void> agregarAutomovil( String placa, int kilometrajeActual) async {
-    final FirebaseAuth _auth = FirebaseAuth.instance;
-    String uid = _auth.currentUser!.uid;
+    final FirebaseAuth auth = FirebaseAuth.instance;
+    String uid = auth.currentUser!.uid;
 
     Automovil automovil = Automovil(
       autoId: "",
@@ -107,7 +107,7 @@ class AutomovilController with ChangeNotifier {
         .map((querySnapshot) {
       if (querySnapshot.docs.isNotEmpty) {
         return Automovil.fromJson(
-            querySnapshot.docs.first.data() as Map<String, dynamic>);
+            querySnapshot.docs.first.data());
       } else {
         throw Exception('Automovil no encontrado para el uid dado');
       }

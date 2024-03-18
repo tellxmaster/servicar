@@ -7,7 +7,7 @@ import 'package:servicar_movil/src/widgets/register_car.dart';
 class RegisterForm extends StatefulWidget {
   static const String routeName = '/register';
 
-  const RegisterForm({Key? key}) : super(key: key);
+  const RegisterForm({super.key});
 
   @override
   RegisterFormState createState() => RegisterFormState();

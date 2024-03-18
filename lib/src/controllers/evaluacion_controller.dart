@@ -20,7 +20,7 @@ class EvaluacionController with  ChangeNotifier{
       print("Evaluación agregada con éxito");
     }catch(e){
       print("Error al agregar evaluación: $e");
-      throw e;
+      rethrow;
     }
    }
    

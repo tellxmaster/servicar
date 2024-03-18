@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class TransactionToggle extends StatefulWidget {
-  const TransactionToggle({Key? key, required this.onSelected}) : super(key: key);
+  const TransactionToggle({super.key, required this.onSelected});
   final Function(int index) onSelected;
 
   @override

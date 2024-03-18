@@ -7,7 +7,7 @@ import 'package:servicar_movil/src/widgets/home_screen.dart';
 import 'package:servicar_movil/src/widgets/info_cita.dart';
 
 class AdminScreen extends StatefulWidget {
-  const AdminScreen({Key? key}) : super(key: key);
+  const AdminScreen({super.key});
   static const String routeName = '/admin';
 
   @override

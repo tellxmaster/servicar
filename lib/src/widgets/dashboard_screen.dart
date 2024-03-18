@@ -27,7 +27,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void>? _loadUserDataFuture;
   Automovil? _automovil;
   List<Cita>? _citas;
-  Map<String, String> _serviceNames = {};
+  final Map<String, String> _serviceNames = {};
 
   @override
   void initState() {
@@ -213,19 +213,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     ListTile(
                       leading: const Icon(Icons.location_on_rounded),
-                      title: Text('Ubicaciòn del taller'),
+                      title: const Text('Ubicaciòn del taller'),
                       onTap: () {
                         // Navega a TallerMapPage cuando el tile es tocado
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => TallerMapPage()),
+                              builder: (context) => const TallerMapPage()),
                         );
                       },
                     ),
                     ListTile(
                       leading: const Icon(Icons.logout),
-                      title: Text("Cerrar Sesiòn"),
+                      title: const Text("Cerrar Sesiòn"),
                       onTap: () {
                         _usuarioController.cerrarSesion(context).then((_) {
                           Navigator.of(context)
@@ -451,7 +451,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Center(
             child: Text(
               title,
-              style: TextStyle(
+              style: const TextStyle(
                   fontSize: 13, color: Color.fromARGB(255, 22, 22, 22)),
             ),
           ),

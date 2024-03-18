@@ -10,7 +10,7 @@ import 'package:servicar_movil/src/widgets/register_evaluation.dart';
 class InfoCita extends StatefulWidget {
   final String id;
 
-  InfoCita({Key? key, required this.id}) : super(key: key);
+  const InfoCita({super.key, required this.id});
 
   @override
   _InfoCitaState createState() => _InfoCitaState();
@@ -28,6 +28,7 @@ class _InfoCitaState extends State<InfoCita> {
 
     return formattedDate;
   }
+
   void _handleEditar(BuildContext context) async {
     final bool? updated = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
@@ -40,11 +41,13 @@ class _InfoCitaState extends State<InfoCita> {
       setState(() {
         _detalleCita = _citaController.obtenerDetalleCita(widget.id);
         _detalleCita.then((cita) {
-          _nombreServicio = ServicioController().obtenerNombreServicioPorId(cita.idServicio);
+          _nombreServicio =
+              ServicioController().obtenerNombreServicioPorId(cita.idServicio);
         });
       });
     }
   }
+
   void _handleEvaluarCita(BuildContext context) async {
     // Primero, obtener los detalles de la cita para verificar si ya fue evaluada
     _citaController.obtenerDetalleCita(widget.id).then((cita) {
@@ -83,8 +86,6 @@ class _InfoCitaState extends State<InfoCita> {
       ));
     });
   }
-
-
 
   void _handleCancelar(BuildContext context, String idCita) async {
     // Mostrar cuadro de diálogo de confirmación
@@ -155,157 +156,163 @@ class _InfoCitaState extends State<InfoCita> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Detalles de la Cita'),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back),
-          onPressed: () {
-            // Al presionar la flecha de atrás, se retorna false a la página anterior.
-            Navigator.of(context).pop(false);
-          },
+    return WillPopScope(
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Detalles de la Cita'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              // Al presionar la flecha de atrás, se retorna false a la página anterior.
+              Navigator.of(context).pop(false);
+            },
+          ),
+          // El resto de tu AppBar como acciones, título, etc.
         ),
-        // El resto de tu AppBar como acciones, título, etc.
-      ),
-      body: FutureBuilder<Cita>(
-        future: _detalleCita,
-        builder: (context, snapshotCita) {
-          if (snapshotCita.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshotCita.hasError) {
-            return const Center(
-                child: Text('Error al cargar los detalles de la cita'));
-          } else if (snapshotCita.hasData) {
-            // Ahora cargamos el nombre del servicio con otro FutureBuilder
-            return FutureBuilder<String>(
-              future:
-                  _nombreServicio, // Asegúrate de que este future se inicia en initState()
-              builder: (context, snapshotNombreServicio) {
-                if (snapshotNombreServicio.connectionState ==
-                    ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshotNombreServicio.hasError) {
-                  return const Center(
-                      child: Text('Error al cargar el nombre del servicio'));
-                } else {
-                  // Todo está cargado, procedemos a construir la UI
-                  return SingleChildScrollView(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Center(
-                          // Asegurar que todo el contenido esté centrado horizontalmente
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    getDayTimestamp(
-                                        snapshotCita.data!.fechaHoraInicio),
+        body: FutureBuilder<Cita>(
+          future: _detalleCita,
+          builder: (context, snapshotCita) {
+            if (snapshotCita.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshotCita.hasError) {
+              return const Center(
+                  child: Text('Error al cargar los detalles de la cita'));
+            } else if (snapshotCita.hasData) {
+              // Ahora cargamos el nombre del servicio con otro FutureBuilder
+              return FutureBuilder<String>(
+                future:
+                    _nombreServicio, // Asegúrate de que este future se inicia en initState()
+                builder: (context, snapshotNombreServicio) {
+                  if (snapshotNombreServicio.connectionState ==
+                      ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (snapshotNombreServicio.hasError) {
+                    return const Center(
+                        child: Text('Error al cargar el nombre del servicio'));
+                  } else {
+                    // Todo está cargado, procedemos a construir la UI
+                    return SingleChildScrollView(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Center(
+                            // Asegurar que todo el contenido esté centrado horizontalmente
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      getDayTimestamp(
+                                          snapshotCita.data!.fechaHoraInicio),
+                                      style: const TextStyle(
+                                          fontSize: 38,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF673AB7)),
+                                    ),
+                                    Text(
+                                      getMonthTimestamp(
+                                          snapshotCita.data!.fechaHoraInicio),
+                                      style: const TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.normal,
+                                          color: Color(0xFF673AB7)),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(width: 15),
+                                // Este Expanded se elimina si deseas un centrado más ajustado al contenido
+                                Expanded(
+                                  child: Text(
+                                    snapshotNombreServicio.data!,
+                                    textAlign: TextAlign.center,
                                     style: const TextStyle(
-                                        fontSize: 38,
+                                        fontSize: 24,
                                         fontWeight: FontWeight.bold,
-                                        color: Color(0xFF673AB7)),
+                                        color: Colors.black),
                                   ),
-                                  Text(
-                                    getMonthTimestamp(
-                                        snapshotCita.data!.fechaHoraInicio),
-                                    style: const TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.normal,
-                                        color: Color(0xFF673AB7)),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(width: 15),
-                              // Este Expanded se elimina si deseas un centrado más ajustado al contenido
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          _quoteDetailRow(
+                            title: 'Estado',
+                            value: snapshotCita.data!.estado,
+                          ),
+                          _quoteDetailRow(
+                            title: 'Inicio',
+                            value: formatTimestamp(
+                                snapshotCita.data!.fechaHoraInicio),
+                          ),
+                          _quoteDetailRow(
+                            title: 'Finalización',
+                            value: formatTimestamp(
+                                snapshotCita.data!.fechaHoraFin),
+                          ),
+                          const SizedBox(height: 20),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
                               Expanded(
-                                child: Text(
-                                  snapshotNombreServicio.data!,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black),
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    _handleEditar(context);
+                                  },
+                                  child: const Text('Editar'),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    _handleCancelar(
+                                        context, snapshotCita.data!.idCita);
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.red),
+                                  child: const Text('Cancelar Cita'),
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                        const SizedBox(height: 20),
-                        _quoteDetailRow(
-                          title: 'Estado',
-                          value: snapshotCita.data!.estado,
-                        ),
-                        _quoteDetailRow(
-                          title: 'Inicio',
-                          value: formatTimestamp(
-                              snapshotCita.data!.fechaHoraInicio),
-                        ),
-                        _quoteDetailRow(
-                          title: 'Finalización',
-                          value:
-                              formatTimestamp(snapshotCita.data!.fechaHoraFin),
-                        ),
-                        const SizedBox(height: 20),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            Expanded(
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  _handleEditar(context);
-                                },
-                                child: const Text('Editar'),
+                          const SizedBox(height: 20),
+                          ElevatedButton(
+                            onPressed: () {
+                              _handleEvaluarCita(context);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 15.0, horizontal: 20.0),
+                              backgroundColor: Colors.amber,
+                              shape: RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.circular(8), // Rounded corners
                               ),
+                              elevation: 5, // Shadow depth
                             ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  _handleCancelar(
-                                      context, snapshotCita.data!.idCita);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.red),
-                                child: const Text('Cancelar Cita'),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        ElevatedButton(
-                                onPressed: () {
-                                  _handleEvaluarCita(
-                                      context);
-                                },
-                              style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(vertical: 15.0,horizontal: 20.0),
-                                  backgroundColor: Colors.amber,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius:
-                                        BorderRadius.circular(8), // Rounded corners
-                                  ),
-                                  elevation: 5, // Shadow depth
-                                ),
-                                child: const Text('Evaluar Cita'),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-              },
-            );
-          } else {
-            return const Center(
-                child: Text('No se encontraron detalles de la cita'));
-          }
-        },
+                            child: const Text('Evaluar Cita'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                },
+              );
+            } else {
+              return const Center(
+                  child: Text('No se encontraron detalles de la cita'));
+            }
+          },
+        ),
       ),
+      onWillPop: () async {
+        Navigator.of(context).pop(false);
+        return false;
+      },
     );
   }
 }

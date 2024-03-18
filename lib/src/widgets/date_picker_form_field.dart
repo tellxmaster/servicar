@@ -1,63 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-// Añade un nuevo parámetro al constructor de la clase para el callback
 class DatePickerFormField extends StatefulWidget {
-  final Function(DateTime)
-      onDateSelected; // El callback que se invocará con la nueva fecha
-  final DateTime initialDate; // Añadido para aceptar una fecha inicial
-  const DatePickerFormField({super.key, required this.onDateSelected, required this.initialDate});
+  final Function(DateTime) onDateSelected;
+  final TextEditingController controller;
+
+  const DatePickerFormField({
+    super.key,
+    required this.onDateSelected,
+    required this.controller,
+  });
 
   @override
   State<DatePickerFormField> createState() => _DatePickerFormFieldState();
 }
 
 class _DatePickerFormFieldState extends State<DatePickerFormField> {
-  late TextEditingController _controller;
-  late DateTime selectedDate = DateTime.now();
-
-  @override
-  void initState() {
-    super.initState();
-     selectedDate = widget.initialDate; // Usar la fecha inicial del widget
-    _controller = TextEditingController(text: DateFormat('yyyy-MM-dd').format(widget.initialDate));
-  }
-
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: selectedDate,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 7)),
-    );
-    if (picked != null && picked != selectedDate) {
-      setState(() {
-        selectedDate = picked;
-        _controller.text = DateFormat('yyyy-MM-dd').format(picked);
-      });
-      // Aquí se invoca el callback pasando la fecha seleccionada
-      widget.onDateSelected(picked);
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     return TextFormField(
-      controller: _controller,
-      decoration: const InputDecoration(
-        labelText: 'Seleccionar Fecha',
-        prefixIcon: Icon(Icons.date_range),
+      controller: widget.controller,
+      decoration: InputDecoration(
+        labelText: 'Fecha',
+        prefixIcon: Icon(Icons.calendar_today),
+        suffixIcon: Icon(Icons.arrow_drop_down),
       ),
-      validator: (value) =>
-          value!.isEmpty ? 'Por favor seleccione una fecha' : null,
-      onTap: () => _selectDate(context),
-      readOnly: true,
+      readOnly: true, // Hace el campo de texto de solo lectura
+      onTap: () async {
+        // Mostrar el selector de fecha
+        final DateTime? pickedDate = await showDatePicker(
+          context: context,
+          initialDate: DateTime.now(),
+          firstDate: DateTime(2000),
+          lastDate: DateTime(2101),
+        );
+
+        if (pickedDate != null) {
+          // Si se selecciona una fecha, actualiza el valor del controlador y notifica al widget padre
+          widget.controller.text = DateFormat('yyyy-MM-dd').format(pickedDate);
+          widget.onDateSelected(pickedDate);
+        }
+      },
     );
   }
 }

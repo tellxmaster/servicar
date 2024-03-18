@@ -7,7 +7,7 @@ String servicioToJson(Servicio data) => json.encode(data.toJson());
 class Servicio {
   String idServicio;
   String nombre;
-  int duracion;
+  String duracion;
   String idArea;
 
   Servicio({

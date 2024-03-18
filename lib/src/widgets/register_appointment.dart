@@ -30,7 +30,7 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
   String? selectedAreaId = '';
   String? selectedServiceId = '';
   String? selectedWorkerId = '';
-  DateTime? selectedDate = DateTime.now();
+  DateTime? selectedDate;
   String? selectedTimeSlot;
   List<Area> areas = [];
   List<Servicio> servicios = [];
@@ -38,6 +38,7 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
   List<String> availableTimes = [];
   late FirebaseAuth _auth2;
   late String uid;
+  TextEditingController dateController = TextEditingController();
 
   @override
   void initState() {
@@ -45,72 +46,86 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
     super.initState();
     _auth2 = FirebaseAuth.instance;
     uid = _auth2.currentUser!.uid;
-    
   }
+
+  @override
+  void dispose() {
+    dateController.dispose();
+    super.dispose();
+  }
+
   Future<void> inicializarFormulario() async {
-    await cargarAreas(); // Asegúrate de que esta operación se complete antes de proceder
+    await cargarAreas();
 
     if (widget.citaId != null) {
-      await cargarDatosCitaExistente(); // Espera a que los datos de la cita existente se carguen si es necesario
+      await cargarDatosCitaExistente();
     }
-    // No necesitas llamar a cargarAreas() aquí de nuevo ya que se llama al principio
   }
 
   Future<void> cargarDatosCitaExistente() async {
-    // Asegúrate de que este método cargue y actualice correctamente los estados relacionados con la cita
+    // Obtén los detalles de la cita existente.
     final cita = await CitasController().obtenerDetalleCita(widget.citaId!);
-    final Servicio servicio =  
-    await ServicioController().obtenerServicioPorId(cita.idServicio);
-    // Ahora que tienes el servicio, puedes obtener el área
-    final Area area = await AreaController().obtenerAreaPorId(servicio.idArea);
+    final Servicio service =
+        await ServicioController().obtenerServicioPorId(cita.idServicio);
+    print(service.idArea);
+    await cargarServiciosPorArea(service.idArea);
+    await cargarTrabajadoresPorArea(service.idArea);
+    print(cita.fechaHoraInicio.toDate());
 
     setState(() {
-      // Actualiza el estado del formulario con los datos de la cita
-      print("Fecha inicial: $selectedDate");
-      selectedDate = cita.fechaHoraInicio.toDate();
-      selectedAreaId = area.idArea;
-      selectedServiceId = cita.idServicio;
+      selectedAreaId = service.idArea;
+      selectedServiceId = service.idServicio;
       selectedWorkerId = cita.idTrabajador;
-      print("Fecha configurada: $selectedDate");
-      // Continúa actualizando el resto de los campos necesarios
-      // Luego de establecer el área, deberías cargar los servicios y trabajadores para esa área específica
-      // Asegúrate de que estas llamadas también actualicen el estado según sea necesario
+      selectedDate = cita.fechaHoraInicio.toDate();
+      // Actualiza el controlador de texto con la fecha de la cita
+      dateController.text = DateFormat('yyyy-MM-dd').format(selectedDate!);
     });
-    cargarServiciosPorArea(selectedAreaId!);
-    cargarTrabajadoresPorArea(selectedAreaId!);
+    Future.microtask(() async {
+      await calcularHorariosDisponibles();
+    });
   }
 
   Future<void> cargarAreas() async {
     areas = await AreaController().obtenerAreas();
     if (areas.isNotEmpty) {
-      setState(() {
-        selectedAreaId = areas.first.idArea;
-        // Nota: Aquí solo estableces el área por defecto. Las llamadas para cargar servicios y trabajadores
-        // no deberían estar aquí si dependen del ID de una cita existente, esas llamadas se mueven a cargarDatosCitaExistente()
-      });
+      setState(() {});
     }
   }
 
-  void cargarServiciosPorArea(String idArea) async {
-    servicios = await ServicioController().obtenerServiciosPorArea(idArea);
-    if (servicios.isNotEmpty) {
-      selectedServiceId = servicios
-          .first.idServicio; // Selecciona por defecto el primer servicio
-    }
-    setState(() {});
-  }
-
-  void cargarTrabajadoresPorArea(String idArea) async {
-    trabajadores =
-        await TrabajadorController().obtenerTrabajadoresPorArea(idArea);
-    if (trabajadores.isNotEmpty) {
-      selectedWorkerId = trabajadores
-          .first.idTrabajador; // Selecciona por defecto el primer trabajador
+  Future<void> cargarServiciosPorArea(String idArea) async {
+    if (idArea.isEmpty) {
+      servicios = [];
+      selectedServiceId = ""; // Establecer como vacío
+    } else {
+      servicios = await ServicioController().obtenerServiciosPorArea(idArea);
+      if (servicios.isNotEmpty) {
+        selectedServiceId =
+            servicios.first.idServicio; // Primer servicio por defecto
+      } else {
+        selectedServiceId = ""; // Ningún servicio disponible
+      }
     }
     setState(() {});
   }
 
-  void calcularHorariosDisponibles() async {
+  Future<void> cargarTrabajadoresPorArea(String idArea) async {
+    if (idArea.isEmpty) {
+      trabajadores = [];
+      selectedWorkerId = ""; // Establecer como vacío
+    } else {
+      trabajadores =
+          await TrabajadorController().obtenerTrabajadoresPorArea(idArea);
+      if (trabajadores.isNotEmpty) {
+        selectedWorkerId =
+            trabajadores.first.idTrabajador; // Primer trabajador por defecto
+      } else {
+        selectedWorkerId = ""; // Ningún trabajador disponible
+      }
+    }
+    setState(() {});
+  }
+
+  Future<void> calcularHorariosDisponibles() async {
     if (selectedWorkerId == null ||
         selectedServiceId == null ||
         selectedDate == null) {
@@ -124,7 +139,7 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
 
     if (servicioSeleccionado == null) return;
 
-    final int duracionServicio = servicioSeleccionado.duracion;
+    final int duracionServicio = int.parse(servicioSeleccionado.duracion);
 
     final List<Cita> citasDelDia =
         await CitasController().obtenerCitasPorTrabajadorYFecha(
@@ -132,15 +147,10 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
       selectedDate!,
     );
 
-    print(selectedWorkerId);
-    print(selectedServiceId);
-    print(selectedDate);
-    print(citasDelDia);
-
     // Aquí debes calcular los horarios de trabajo del trabajador seleccionado.
     // Para este ejemplo, asumiremos un horario fijo de 9:00 a 17:00.
     List<String> horariosTrabajo =
-        generarHorariosTrabajo(8, 16, duracionServicio);
+        generarHorariosTrabajo(8, 18, duracionServicio);
 
     // Excluye los horarios ocupados por las citas existentes.
     availableTimes = filtrarHorariosDisponibles(
@@ -150,23 +160,20 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
   }
 
   RangoHorario convertirRangoATimestamps(String rangoHorario) {
+    // Dividir el rango en hora de inicio y fin basado en el nuevo formato
     List<String> partes = rangoHorario.split(' - ');
-    List<String> horaInicioPartes = partes[0].split(':');
-    List<String> horaFinPartes = partes[1].split(':');
+    // Necesitarás parsear las fechas y horas desde el formato extendido
+    DateFormat formato = DateFormat('E, d MMM HH:mm');
 
-    // Usa selectedDate en lugar de DateTime.now()
-    DateTime inicioDateTime = DateTime(
-        selectedDate!.year,
-        selectedDate!.month,
-        selectedDate!.day,
-        int.parse(horaInicioPartes[0]),
-        int.parse(horaInicioPartes[1]));
-    DateTime finDateTime = DateTime(
-        selectedDate!.year,
-        selectedDate!.month,
-        selectedDate!.day,
-        int.parse(horaFinPartes[0]),
-        int.parse(horaFinPartes[1]));
+    DateTime inicioDateTime = formato.parse(partes[0], true);
+    DateTime finDateTime = formato.parse(partes[1], true);
+
+    // Si el rango horario empieza y termina en diferentes días, ajustar la fecha
+    if (!inicioDateTime.isAtSameMomentAs(finDateTime) &&
+        inicioDateTime.isAfter(finDateTime)) {
+      finDateTime = DateTime(finDateTime.year, finDateTime.month,
+          inicioDateTime.day, finDateTime.hour, finDateTime.minute);
+    }
 
     Timestamp inicioTimestamp = Timestamp.fromDate(inicioDateTime);
     Timestamp finTimestamp = Timestamp.fromDate(finDateTime);
@@ -182,72 +189,49 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
     final DateTime fin = DateTime(
         selectedDate!.year, selectedDate!.month, selectedDate!.day, horaFin);
 
-    while (inicio.add(Duration(minutes: duracionServicio)).isBefore(fin)) {
-      String horarioInicio = DateFormat('HH:mm').format(inicio);
-      inicio = inicio.add(Duration(minutes: duracionServicio));
-      String horarioFin = DateFormat('HH:mm').format(inicio);
+    do {
+      DateTime posibleFin = inicio.add(Duration(minutes: duracionServicio));
+      // Ajustar el formato para incluir el día si es necesario
+      String horarioInicio = DateFormat('E, d MMM HH:mm').format(inicio);
+      String horarioFin = DateFormat('E, d MMM HH:mm').format(posibleFin);
 
       horarios.add('$horarioInicio - $horarioFin');
-    }
+      inicio = posibleFin;
+
+      if (inicio.hour >= horaFin || !inicio.isBefore(fin)) {
+        inicio =
+            DateTime(inicio.year, inicio.month, inicio.day + 1, horaInicio);
+      }
+    } while (inicio.isBefore(fin) || inicio.compareTo(fin) == 0);
+
     return horarios;
   }
 
   List<String> filtrarHorariosDisponibles(List<String> horariosTrabajo,
       List<Cita> citasDelDia, int duracionServicio) {
-    // Convertir rangos de citas a strings en formato "HH:mm - HH:mm"
-    List<String> rangosCitas = citasDelDia.map((cita) {
-      String inicio =
-          "${cita.fechaHoraInicio.toDate().hour.toString().padLeft(2, '0')}:${cita.fechaHoraInicio.toDate().minute.toString().padLeft(2, '0')}";
-      String fin =
-          "${cita.fechaHoraFin.toDate().hour.toString().padLeft(2, '0')}:${cita.fechaHoraFin.toDate().minute.toString().padLeft(2, '0')}";
-      return "$inicio - $fin";
-    }).toList();
-
     List<String> horariosDisponibles = [];
-
-    // Verificar cada horario de trabajo contra los rangos de citas
     for (var horario in horariosTrabajo) {
       bool esDisponible = true;
-      for (var rangoCita in rangosCitas) {
-        // Dividir los horarios y rangos de citas en inicio y fin
-        List<String> horasHorario = horario.split(' - ');
-        List<String> horasCita = rangoCita.split(' - ');
+      final partesHorario = horario.split(' - ');
+      final fechaHoraInicioHorario =
+          DateFormat('E, d MMM HH:mm').parse(partesHorario[0], true);
+      final fechaHoraFinHorario =
+          DateFormat('E, d MMM HH:mm').parse(partesHorario[1], true);
 
-        // Convertir a DateTime para comparar
-        DateTime inicioHorario = DateTime(
-            0,
-            0,
-            0,
-            int.parse(horasHorario[0].split(':')[0]),
-            int.parse(horasHorario[0].split(':')[1]));
-        DateTime finHorario =
-            inicioHorario.add(Duration(minutes: duracionServicio));
-        DateTime inicioCita = DateTime(
-            0,
-            0,
-            0,
-            int.parse(horasCita[0].split(':')[0]),
-            int.parse(horasCita[0].split(':')[1]));
-        DateTime finCita = DateTime(
-            0,
-            0,
-            0,
-            int.parse(horasCita[1].split(':')[0]),
-            int.parse(horasCita[1].split(':')[1]));
+      for (var cita in citasDelDia) {
+        DateTime inicioCita = cita.fechaHoraInicio.toDate();
+        DateTime finCita = cita.fechaHoraFin.toDate();
 
-        // Comprobar si el horario se solapa con alguna cita
-        if (!(finHorario.isBefore(inicioCita) ||
-            inicioHorario.isAfter(finCita))) {
+        if (!(fechaHoraFinHorario.isBefore(inicioCita) ||
+            fechaHoraInicioHorario.isAfter(finCita))) {
           esDisponible = false;
           break;
         }
       }
-
       if (esDisponible) {
         horariosDisponibles.add(horario);
       }
     }
-
     return horariosDisponibles;
   }
 
@@ -281,18 +265,25 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
                           value: selectedAreaId,
                           onChanged: (newValue) {
                             setState(() {
-                              selectedAreaId = newValue;
-                              cargarServiciosPorArea(selectedAreaId!);
-                              cargarTrabajadoresPorArea(selectedAreaId!);
+                              selectedAreaId = newValue ?? '';
+                              if (newValue != null && newValue.isNotEmpty) {
+                                cargarServiciosPorArea(newValue);
+                                cargarTrabajadoresPorArea(newValue);
+                              }
                             });
                           },
-                          items:
-                              areas.map<DropdownMenuItem<String>>((Area area) {
-                            return DropdownMenuItem<String>(
-                              value: area.idArea,
-                              child: Text(area.nombre),
-                            );
-                          }).toList(),
+                          items: [
+                            const DropdownMenuItem<String>(
+                              value: '', // Valor nulo para "--Seleccione--"
+                              child: Text("-- Seleccione --"),
+                            ),
+                            ...areas.map<DropdownMenuItem<String>>((Area area) {
+                              return DropdownMenuItem<String>(
+                                value: area.idArea,
+                                child: Text(area.nombre),
+                              );
+                            }),
+                          ],
                           decoration: const InputDecoration(
                             labelText: 'Área',
                             prefixIcon: Icon(Icons.car_repair),
@@ -302,21 +293,28 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
                         const SizedBox(height: 20),
                         // Dropdown para seleccionar el servicio
                         DropdownButtonFormField<String>(
-                          value: selectedServiceId,
+                          value: selectedServiceId, // Maneja la selección nula.
                           onChanged: (newValue) {
                             setState(() {
-                              selectedServiceId = newValue;
+                              selectedServiceId = newValue!;
                               // Aquí podrías cargar información adicional basada en el servicio seleccionado si fuera necesario
                             });
                           },
-                          items: servicios.map<DropdownMenuItem<String>>(
-                              (Servicio servicio) {
-                            return DropdownMenuItem<String>(
-                              value: servicio
-                                  .idServicio, // Asumiendo que Servicio tiene un campo id
-                              child: Text(servicio.nombre), // y un campo nombre
-                            );
-                          }).toList(),
+                          items: [
+                            const DropdownMenuItem<String>(
+                              value: "", // Valor especial que actúa como nulo.
+                              child: Text("-- Seleccione --"),
+                            ),
+                            ...servicios.map<DropdownMenuItem<String>>(
+                                (Servicio servicio) {
+                              return DropdownMenuItem<String>(
+                                value: servicio
+                                    .idServicio, // Asumiendo que Servicio tiene un campo idServicio
+                                child:
+                                    Text(servicio.nombre), // y un campo nombre
+                              );
+                            }),
+                          ],
                           decoration: const InputDecoration(
                             labelText: 'Servicio',
                             prefixIcon: Icon(Icons.car_crash),
@@ -329,20 +327,26 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
                           value: selectedWorkerId,
                           onChanged: (newValue) {
                             setState(() {
-                              selectedWorkerId = newValue;
+                              selectedWorkerId = newValue!;
                               calcularHorariosDisponibles();
-                              // Similarmente, podrías cargar más datos basados en el trabajador seleccionado si es necesario
+                              // Aquí podrías realizar acciones adicionales basadas en el trabajador seleccionado si es necesario
                             });
                           },
-                          items: trabajadores.map<DropdownMenuItem<String>>(
-                              (Trabajador trabajador) {
-                            return DropdownMenuItem<String>(
-                              value: trabajador
-                                  .idTrabajador, // Asumiendo que Trabajador tiene un campo id
-                              child:
-                                  Text(trabajador.nombre), // y un campo nombre
-                            );
-                          }).toList(),
+                          items: [
+                            const DropdownMenuItem<String>(
+                              value: "", // Valor especial que actúa como nulo.
+                              child: Text("-- Seleccione --"),
+                            ),
+                            ...trabajadores.map<DropdownMenuItem<String>>(
+                                (Trabajador trabajador) {
+                              return DropdownMenuItem<String>(
+                                value: trabajador
+                                    .idTrabajador, // Asumiendo que Trabajador tiene un campo idTrabajador
+                                child: Text(
+                                    trabajador.nombre), // y un campo nombre
+                              );
+                            }).toList(),
+                          ],
                           decoration: const InputDecoration(
                             labelText: 'Trabajador',
                             prefixIcon: Icon(Icons.work),
@@ -351,19 +355,17 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
 
                         const SizedBox(height: 20),
                         // Selector de fecha
-                        
+
                         DatePickerFormField(
-                          initialDate: selectedDate ?? DateTime.now(),
+                          controller: dateController,
                           onDateSelected: (DateTime date) {
-                            // Aquí puedes manejar la fecha seleccionada, por ejemplo, actualizar el estado del componente padre
-                           setState(() {
+                            setState(() {
                               selectedDate = date;
-                              calcularHorariosDisponibles();
+                              // Actualiza cualquier otro estado necesario aquí
                             });
-                            // Agrega setState aquí para asegurarte de que el DatePickerFormField se actualice
-                          
                           },
                         ),
+
                         const SizedBox(height: 20),
                         // Selector de hora
                         DropdownButtonFormField<String>(
@@ -402,8 +404,8 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
 
                                     // Crear el objeto Cita
                                     Cita cita = Cita(
-                                      idCita:
-                                          widget.citaId ?? '', // Este valor se actualizará después de crear la cita en Firestore
+                                      idCita: widget.citaId ??
+                                          '', // Este valor se actualizará después de crear la cita en Firestore
                                       idCliente:
                                           uid, // Deberás reemplazar esto con el ID real del cliente
                                       idServicio:
@@ -416,40 +418,57 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
                                           'pendiente', // Estado inicial de la cita
                                       evaluada: false,
                                     );
-                                      if (widget.citaId != null) {
-                                        // Estás editando una cita existente
-                                        await CitasController().editarCita(cita).then((_) {
-                                          // Mostrar un mensaje de éxito
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(content: Text('Cita actualizada con éxito')),
-                                          );
-                                          // Navegar de regreso al dashboard o la pantalla anterior
-                                         Navigator.of(context)
-                                          .pushNamed(DashboardScreen.routeName);
-                                        }).catchError((error) {
-                                          // Manejar el error, por ejemplo, mostrando un mensaje
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text('Error al actualizar la cita: $error')),
-                                          );
-                                        });
-                                      } else {
-                                        // Crear una nueva cita
-                                        await CitasController().crearCita(cita).then((_) {
-                                          // Mostrar un mensaje de éxito
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(content: Text('Cita agendada con éxito')),
-                                          );
-                                          // Navegar de regreso al dashboard o la pantalla anterior
-                                          Navigator.of(context)
-                                          .pushNamed(DashboardScreen.routeName);
-                                        }).catchError((error) {
-                                          // Manejar el error
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text('Error al crear la cita: $error')),
-                                          );
-                                        });
-                                      }
-                                    } : null,
+                                    if (widget.citaId != null) {
+                                      // Estás editando una cita existente
+                                      await CitasController()
+                                          .editarCita(cita)
+                                          .then((_) {
+                                        // Mostrar un mensaje de éxito
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                              content: Text(
+                                                  'Cita actualizada con éxito')),
+                                        );
+                                        // Navegar de regreso al dashboard o la pantalla anterior
+                                        Navigator.of(context).pushNamed(
+                                            DashboardScreen.routeName);
+                                      }).catchError((error) {
+                                        // Manejar el error, por ejemplo, mostrando un mensaje
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                              content: Text(
+                                                  'Error al actualizar la cita: $error')),
+                                        );
+                                      });
+                                    } else {
+                                      // Crear una nueva cita
+                                      await CitasController()
+                                          .crearCita(cita)
+                                          .then((_) {
+                                        // Mostrar un mensaje de éxito
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                              content: Text(
+                                                  'Cita agendada con éxito')),
+                                        );
+                                        // Navegar de regreso al dashboard o la pantalla anterior
+                                        Navigator.of(context).pushNamed(
+                                            DashboardScreen.routeName);
+                                      }).catchError((error) {
+                                        // Manejar el error
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                              content: Text(
+                                                  'Error al crear la cita: $error')),
+                                        );
+                                      });
+                                    }
+                                  }
+                                : null,
                             child: const Text('AGENDAR'),
                           ),
                         ),

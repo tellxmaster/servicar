@@ -58,7 +58,7 @@ class CitasController extends ChangeNotifier {
     // Obtener la fecha y hora actuales
     final DateTime now = DateTime.now();
     // Calcular 4 horas después del momento actual
-    final DateTime fourHoursFromNow = now.add(Duration(hours: 4));
+    final DateTime fourHoursFromNow = now.add(const Duration(hours: 4));
 
     // Obtener citas próximas dentro de las próximas 4 horas
     final QuerySnapshot citasSnapshot = await _db

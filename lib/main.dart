@@ -16,16 +16,17 @@ import 'package:servicar_movil/src/widgets/register_evaluation.dart';
 import 'package:servicar_movil/src/widgets/register_form.dart';
 import 'package:servicar_movil/src/widgets/splash_screen.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  Intl.defaultLocale = 'es_EC';
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
   initializeDateFormatting('es_ES', null).then((_) {
     runApp(const MyApp());
   });
-  
 }
 
 class MyApp extends StatelessWidget {
@@ -40,7 +41,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AutomovilController()),
         ChangeNotifierProvider(create: (_) => CitasController()),
         ChangeNotifierProvider(create: (_) => ServicioController()),
-      ], 
+      ],
       child: MaterialApp(
           title: 'ServiCar',
           debugShowCheckedModeBanner: false,
@@ -67,7 +68,7 @@ class MyApp extends StatelessWidget {
             elevatedButtonTheme: ElevatedButtonThemeData(
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                    Color(0xFF673AB7), // Color de fondo de botones morado
+                    const Color(0xFF673AB7), // Color de fondo de botones morado
                 foregroundColor: Colors.white, // Color de texto e íconos blanco
                 padding: const EdgeInsets.symmetric(vertical: 15.0),
                 shape: RoundedRectangleBorder(
@@ -86,7 +87,7 @@ class MyApp extends StatelessWidget {
             RegisterForm.routeName: (context) => const RegisterForm(),
             RegisterCar.routeName: (context) => const RegisterCar(),
             DashboardScreen.routeName: (context) => const DashboardScreen(),
-            AdminScreen.routeName: (context)=> const AdminScreen(),
+            AdminScreen.routeName: (context) => const AdminScreen(),
             RegisterAppointment.routeName: (context) =>
                 const RegisterAppointment(),
             RegisterEvaluation.routeName: (context) =>
