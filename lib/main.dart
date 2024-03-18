@@ -16,15 +16,13 @@ import 'package:servicar_movil/src/widgets/register_evaluation.dart';
 import 'package:servicar_movil/src/widgets/register_form.dart';
 import 'package:servicar_movil/src/widgets/splash_screen.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:intl/intl.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  Intl.defaultLocale = 'es_EC';
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  initializeDateFormatting('es_ES', null).then((_) {
+  initializeDateFormatting('es_EC', null).then((_) {
     runApp(const MyApp());
   });
 }

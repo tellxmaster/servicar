@@ -99,9 +99,6 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
     } else {
       servicios = await ServicioController().obtenerServiciosPorArea(idArea);
       if (servicios.isNotEmpty) {
-        selectedServiceId =
-            servicios.first.idServicio; // Primer servicio por defecto
-      } else {
         selectedServiceId = ""; // Ningún servicio disponible
       }
     }
@@ -116,10 +113,7 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
       trabajadores =
           await TrabajadorController().obtenerTrabajadoresPorArea(idArea);
       if (trabajadores.isNotEmpty) {
-        selectedWorkerId =
-            trabajadores.first.idTrabajador; // Primer trabajador por defecto
-      } else {
-        selectedWorkerId = ""; // Ningún trabajador disponible
+        selectedWorkerId = ""; // Primer trabajador por defecto
       }
     }
     setState(() {});
@@ -160,25 +154,37 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
   }
 
   RangoHorario convertirRangoATimestamps(String rangoHorario) {
-    // Dividir el rango en hora de inicio y fin basado en el nuevo formato
-    List<String> partes = rangoHorario.split(' - ');
-    // Necesitarás parsear las fechas y horas desde el formato extendido
-    DateFormat formato = DateFormat('E, d MMM HH:mm');
+    // Intenta parsear las fechas y manejar cualquier error que pueda ocurrir
+    try {
+      // Dividir el rango en hora de inicio y fin basado en el nuevo formato
+      List<String> partes = rangoHorario.split(' - ');
+      if (partes.length != 2) {
+        throw FormatException('El rango horario no tiene el formato correcto.');
+      }
 
-    DateTime inicioDateTime = formato.parse(partes[0], true);
-    DateTime finDateTime = formato.parse(partes[1], true);
+      // Especificar el formato de fecha y hora
+      DateFormat formato = DateFormat("EEE, d MMM HH:mm yyyy", "en_US_POSIX");
 
-    // Si el rango horario empieza y termina en diferentes días, ajustar la fecha
-    if (!inicioDateTime.isAtSameMomentAs(finDateTime) &&
-        inicioDateTime.isAfter(finDateTime)) {
-      finDateTime = DateTime(finDateTime.year, finDateTime.month,
-          inicioDateTime.day, finDateTime.hour, finDateTime.minute);
+      DateTime inicioDateTime = formato.parse(partes[0], true).toLocal();
+      DateTime finDateTime = formato.parse(partes[1], true).toLocal();
+
+      // Ajustar la fecha de fin si es necesario
+      if (finDateTime.isBefore(inicioDateTime)) {
+        finDateTime = DateTime(finDateTime.year, finDateTime.month,
+            inicioDateTime.day + 1, finDateTime.hour, finDateTime.minute);
+      }
+
+      Timestamp inicioTimestamp = Timestamp.fromDate(inicioDateTime);
+      Timestamp finTimestamp = Timestamp.fromDate(finDateTime);
+
+      print('Inicio Timestamp: ${inicioTimestamp.toString()}');
+      print('Fin Timestamp: ${finTimestamp.toString()}');
+
+      return RangoHorario(inicio: inicioTimestamp, fin: finTimestamp);
+    } catch (e) {
+      print('Error al convertir rango horario: $e');
+      rethrow; // Propagar el error si es necesario.
     }
-
-    Timestamp inicioTimestamp = Timestamp.fromDate(inicioDateTime);
-    Timestamp finTimestamp = Timestamp.fromDate(finDateTime);
-
-    return RangoHorario(inicio: inicioTimestamp, fin: finTimestamp);
   }
 
   List<String> generarHorariosTrabajo(
@@ -374,6 +380,7 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
                           onChanged: (newValue) {
                             setState(() {
                               selectedTimeSlot = newValue;
+                              print(newValue);
                             });
                           },
                           items: availableTimes

@@ -37,6 +37,7 @@ class _DatePickerFormFieldState extends State<DatePickerFormField> {
 
         if (pickedDate != null) {
           // Si se selecciona una fecha, actualiza el valor del controlador y notifica al widget padre
+          print(pickedDate);
           widget.controller.text = DateFormat('yyyy-MM-dd').format(pickedDate);
           widget.onDateSelected(pickedDate);
         }
