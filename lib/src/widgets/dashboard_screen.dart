@@ -28,6 +28,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Automovil? _automovil;
   List<Cita>? _citas;
   final Map<String, String> _serviceNames = {};
+  final CitasController citasController = CitasController();
 
   @override
   void initState() {
@@ -75,6 +76,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _automovil = auto;
         _citas = citas;
       });
+
+      citasController.verificarCitasYEnviarRecordatorios();
     } catch (e) {
       print("Error al obtener el automóvil: $e");
     }

@@ -47,6 +47,7 @@ class CitasController extends ChangeNotifier {
   }
 
   Future<void> verificarCitasYEnviarRecordatorios() async {
+    print("Enviando recordatorio");
     final User? usuarioActual = FirebaseAuth.instance.currentUser;
     final String? emailDestinatario = usuarioActual?.email;
 
@@ -71,30 +72,41 @@ class CitasController extends ChangeNotifier {
       final Map<String, dynamic> citaData = doc.data() as Map<String, dynamic>;
       final Cita cita = Cita.fromJson(citaData);
 
-      // Obtener el documento del servicio basado en el idServicio
-      DocumentSnapshot servicioDoc =
-          await _db.collection('servicios').doc(cita.idServicio).get();
-      if (!servicioDoc.exists) {
-        print("Documento de servicio no encontrado.");
-        continue;
+      // Solo proceder si el estado de la cita no es "notificado"
+      if (cita.estado != "notificado") {
+        // Obtener el documento del servicio basado en el idServicio
+        DocumentSnapshot servicioDoc =
+            await _db.collection('servicios').doc(cita.idServicio).get();
+        if (!servicioDoc.exists) {
+          print("Documento de servicio no encontrado.");
+          continue;
+        }
+
+        // Decodificar el documento a una instancia de Servicio
+        final Servicio servicio =
+            Servicio.fromJson(servicioDoc.data() as Map<String, dynamic>);
+
+        // Construir el mensaje del correo electrónico
+        String asunto = "Recordatorio de Cita";
+        String mensaje =
+            "Estimado $emailDestinatario, le recordamos que su cita para ${servicio.nombre} es dentro de menos de 4 horas, a las ${cita.fechaHoraInicio.toDate()}.";
+
+        // Crear el ítem en la colección 'mail' para el Trigger Email
+        await _db.collection('mail').add({
+          'to': emailDestinatario,
+          'message': {
+            'subject': asunto,
+            'text': mensaje,
+          },
+        });
+
+        // Opcionalmente, actualizar el estado de la cita a 'notificado'
+        // si quieres cambiar el estado después de enviar el recordatorio.
+        await _db
+            .collection('citas')
+            .doc(doc.id)
+            .update({'estado': 'notificado'});
       }
-      // Decodificar el documento a una instancia de Servicio
-      final Servicio servicio =
-          Servicio.fromJson(servicioDoc.data() as Map<String, dynamic>);
-
-      // Construir el mensaje del correo electrónico
-      String asunto = "Recordatorio de Cita";
-      String mensaje =
-          "Estimado $emailDestinatario, le recordamos que su cita para ${servicio.nombre} es dentro de menos de 4 horas, a las ${cita.fechaHoraInicio.toDate()}.";
-
-      // Crear el item en la colección 'mail' para el Trigger Email
-      await _db.collection('mail').add({
-        'to': emailDestinatario,
-        'message': {
-          'subject': asunto,
-          'text': mensaje,
-        },
-      });
     }
   }
 
