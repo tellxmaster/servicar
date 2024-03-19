@@ -37,6 +37,7 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
   List<Servicio> servicios = [];
   List<Trabajador> trabajadores = [];
   List<String> availableTimes = [];
+  bool isLoading = false;
   late FirebaseAuth _auth2;
   late String uid;
   TextEditingController dateController = TextEditingController();
@@ -59,7 +60,13 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
     await cargarAreas();
 
     if (widget.citaId != null) {
+      setState(() {
+        isLoading = true;
+      });
       await cargarDatosCitaExistente();
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -318,249 +325,256 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
         appBar: AppBar(
           title: const Text('Registrar Nueva Cita'),
         ),
-        body: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topRight,
-                end: Alignment.bottomLeft,
-                colors: [
-                  Color(0xFFFFFFFF), // Blanco puro, color de inicio
-                  Color(
-                      0xFFF7F7F7), // Gris muy claro, casi blanco, color de fin
-                ],
-              ),
-            ),
-            child: Stack(
-              children: [
-                Column(children: [
-                  SingleChildScrollView(
-                    padding: const EdgeInsets.all(25.0),
-                    child: Column(
-                      children: <Widget>[
-                        //Dropdown para seleccionar el area
-                        DropdownButtonFormField<String>(
-                          value: selectedAreaId,
-                          onChanged: (newValue) {
-                            setState(() {
-                              selectedAreaId = newValue ?? '';
-                              if (newValue != null && newValue.isNotEmpty) {
-                                cargarServiciosPorArea(newValue);
-                                cargarTrabajadoresPorArea(newValue);
-                              }
-                            });
-                          },
-                          items: [
-                            const DropdownMenuItem<String>(
-                              value: '', // Valor nulo para "--Seleccione--"
-                              child: Text("-- Seleccione --"),
-                            ),
-                            ...areas.map<DropdownMenuItem<String>>((Area area) {
-                              return DropdownMenuItem<String>(
-                                value: area.idArea,
-                                child: Text(area.nombre),
-                              );
-                            }),
-                          ],
-                          decoration: const InputDecoration(
-                            labelText: 'Área',
-                            prefixIcon: Icon(Icons.car_repair),
-                          ),
-                        ),
-
-                        const SizedBox(height: 20),
-                        // Dropdown para seleccionar el servicio
-                        DropdownButtonFormField<String>(
-                          value: selectedServiceId, // Maneja la selección nula.
-                          onChanged: (newValue) {
-                            setState(() {
-                              selectedServiceId = newValue!;
-                              // Aquí podrías cargar información adicional basada en el servicio seleccionado si fuera necesario
-                            });
-                          },
-                          items: [
-                            const DropdownMenuItem<String>(
-                              value: "", // Valor especial que actúa como nulo.
-                              child: Text("-- Seleccione --"),
-                            ),
-                            ...servicios.map<DropdownMenuItem<String>>(
-                                (Servicio servicio) {
-                              return DropdownMenuItem<String>(
-                                value: servicio
-                                    .idServicio, // Asumiendo que Servicio tiene un campo idServicio
-                                child:
-                                    Text(servicio.nombre), // y un campo nombre
-                              );
-                            }),
-                          ],
-                          decoration: const InputDecoration(
-                            labelText: 'Servicio',
-                            prefixIcon: Icon(Icons.car_crash),
-                          ),
-                        ),
-
-                        const SizedBox(height: 20),
-                        // Selector de fecha
-
-                        DatePickerFormField(
-                          controller: dateController,
-                          onDateSelected: (DateTime date) {
-                            setState(() {
-                              selectedDate = date;
-                              // Establece availableTimes como vacío para reflejar el cambio de fecha
-                              availableTimes = [];
-                              // Aquí asumo que tienes una función que recalculará los horarios disponibles
-                              // basados en la nueva fecha seleccionada y actualizará el estado adecuadamente.
-                              if (selectedWorkerId != "") {
-                                calcularHorariosDisponibles();
-                              }
-                            });
-                          },
-                        ),
-
-                        const SizedBox(height: 20),
-                        // Dropdown para seleccionar el trabajador
-                        DropdownButtonFormField<String>(
-                          value: selectedWorkerId,
-                          onChanged: (newValue) {
-                            setState(() {
-                              selectedWorkerId = newValue!;
-                              calcularHorariosDisponibles();
-                              // Aquí podrías realizar acciones adicionales basadas en el trabajador seleccionado si es necesario
-                            });
-                          },
-                          items: [
-                            const DropdownMenuItem<String>(
-                              value: "", // Valor especial que actúa como nulo.
-                              child: Text("-- Seleccione --"),
-                            ),
-                            ...trabajadores.map<DropdownMenuItem<String>>(
-                                (Trabajador trabajador) {
-                              return DropdownMenuItem<String>(
-                                value: trabajador
-                                    .idTrabajador, // Asumiendo que Trabajador tiene un campo idTrabajador
-                                child: Text(
-                                    trabajador.nombre), // y un campo nombre
-                              );
-                            }).toList(),
-                          ],
-                          decoration: const InputDecoration(
-                            labelText: 'Trabajador',
-                            prefixIcon: Icon(Icons.work),
-                          ),
-                        ),
-
-                        const SizedBox(height: 20),
-                        // Selector de hora
-                        DropdownButtonFormField<String>(
-                          value: currentHorario ??
-                              selectedTimeSlot, // Asegúrate de manejar este estado correctamente
-                          onChanged: (newValue) {
-                            setState(() {
-                              selectedTimeSlot = newValue;
-                              print(newValue);
-                            });
-                          },
-                          items: availableTimes
-                              .map<DropdownMenuItem<String>>((String time) {
-                            return DropdownMenuItem<String>(
-                              value: time,
-                              child: Text(time),
-                            );
-                          }).toList(),
-                          decoration: const InputDecoration(
-                            labelText: 'Horario Disponible',
-                            prefixIcon: Icon(Icons.query_builder),
-                          ),
-                        ),
-
-                        const SizedBox(height: 30),
-                        // Botón para enviar/agendar la cita
-                        // Botón para enviar/agendar la cita
-                        SizedBox(
-                          width: double.infinity, // Ancho del 100%
-                          child: ElevatedButton(
-                            onPressed: selectedTimeSlot != null
-                                ? () async {
-                                    // Aquí, convertir el horario seleccionado a Timestamps de inicio y fin
-                                    RangoHorario rangoHorario =
-                                        convertirRangoATimestamps(
-                                            selectedTimeSlot!);
-
-                                    // Crear el objeto Cita
-                                    Cita cita = Cita(
-                                      idCita: widget.citaId ??
-                                          '', // Este valor se actualizará después de crear la cita en Firestore
-                                      idCliente:
-                                          uid, // Deberás reemplazar esto con el ID real del cliente
-                                      idServicio:
-                                          selectedServiceId!, // ID del servicio seleccionado
-                                      idTrabajador:
-                                          selectedWorkerId!, // ID del trabajador seleccionado
-                                      fechaHoraInicio: rangoHorario.inicio,
-                                      fechaHoraFin: rangoHorario.fin,
-                                      estado:
-                                          'pendiente', // Estado inicial de la cita
-                                      evaluada: false,
-                                    );
-                                    if (widget.citaId != null) {
-                                      // Estás editando una cita existente
-                                      await CitasController()
-                                          .editarCita(cita)
-                                          .then((_) {
-                                        // Mostrar un mensaje de éxito
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          const SnackBar(
-                                              content: Text(
-                                                  'Cita actualizada con éxito')),
-                                        );
-                                        // Navegar de regreso al dashboard o la pantalla anterior
-                                        Navigator.of(context).pushNamed(
-                                            DashboardScreen.routeName);
-                                      }).catchError((error) {
-                                        // Manejar el error, por ejemplo, mostrando un mensaje
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          SnackBar(
-                                              content: Text(
-                                                  'Error al actualizar la cita: $error')),
-                                        );
-                                      });
-                                    } else {
-                                      // Crear una nueva cita
-                                      await CitasController()
-                                          .crearCita(cita)
-                                          .then((_) {
-                                        // Mostrar un mensaje de éxito
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          const SnackBar(
-                                              content: Text(
-                                                  'Cita agendada con éxito')),
-                                        );
-                                        // Navegar de regreso al dashboard o la pantalla anterior
-                                        Navigator.of(context).pushNamed(
-                                            DashboardScreen.routeName);
-                                      }).catchError((error) {
-                                        // Manejar el error
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          SnackBar(
-                                              content: Text(
-                                                  'Error al crear la cita: $error')),
-                                        );
-                                      });
-                                    }
-                                  }
-                                : null,
-                            child: const Text('AGENDAR'),
-                          ),
-                        ),
-                      ],
-                    ),
+        body: isLoading
+            ? const Center(
+                child: CircularProgressIndicator()) // Muestra el loader
+            : Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topRight,
+                    end: Alignment.bottomLeft,
+                    colors: [
+                      Color(0xFFFFFFFF), // Blanco puro, color de inicio
+                      Color(
+                          0xFFF7F7F7), // Gris muy claro, casi blanco, color de fin
+                    ],
                   ),
-                ])
-              ],
-            )));
+                ),
+                child: Stack(
+                  children: [
+                    Column(children: [
+                      SingleChildScrollView(
+                        padding: const EdgeInsets.all(25.0),
+                        child: Column(
+                          children: <Widget>[
+                            //Dropdown para seleccionar el area
+                            DropdownButtonFormField<String>(
+                              value: selectedAreaId,
+                              onChanged: (newValue) {
+                                setState(() {
+                                  selectedAreaId = newValue ?? '';
+                                  if (newValue != null && newValue.isNotEmpty) {
+                                    cargarServiciosPorArea(newValue);
+                                    cargarTrabajadoresPorArea(newValue);
+                                  }
+                                });
+                              },
+                              items: [
+                                const DropdownMenuItem<String>(
+                                  value: '', // Valor nulo para "--Seleccione--"
+                                  child: Text("-- Seleccione --"),
+                                ),
+                                ...areas
+                                    .map<DropdownMenuItem<String>>((Area area) {
+                                  return DropdownMenuItem<String>(
+                                    value: area.idArea,
+                                    child: Text(area.nombre),
+                                  );
+                                }),
+                              ],
+                              decoration: const InputDecoration(
+                                labelText: 'Área',
+                                prefixIcon: Icon(Icons.car_repair),
+                              ),
+                            ),
+
+                            const SizedBox(height: 20),
+                            // Dropdown para seleccionar el servicio
+                            DropdownButtonFormField<String>(
+                              value:
+                                  selectedServiceId, // Maneja la selección nula.
+                              onChanged: (newValue) {
+                                setState(() {
+                                  selectedServiceId = newValue!;
+                                  // Aquí podrías cargar información adicional basada en el servicio seleccionado si fuera necesario
+                                });
+                              },
+                              items: [
+                                const DropdownMenuItem<String>(
+                                  value:
+                                      "", // Valor especial que actúa como nulo.
+                                  child: Text("-- Seleccione --"),
+                                ),
+                                ...servicios.map<DropdownMenuItem<String>>(
+                                    (Servicio servicio) {
+                                  return DropdownMenuItem<String>(
+                                    value: servicio
+                                        .idServicio, // Asumiendo que Servicio tiene un campo idServicio
+                                    child: Text(
+                                        servicio.nombre), // y un campo nombre
+                                  );
+                                }),
+                              ],
+                              decoration: const InputDecoration(
+                                labelText: 'Servicio',
+                                prefixIcon: Icon(Icons.car_crash),
+                              ),
+                            ),
+
+                            const SizedBox(height: 20),
+                            // Selector de fecha
+
+                            DatePickerFormField(
+                              controller: dateController,
+                              onDateSelected: (DateTime date) {
+                                setState(() {
+                                  selectedDate = date;
+                                  // Establece availableTimes como vacío para reflejar el cambio de fecha
+                                  availableTimes = [];
+                                  // Aquí asumo que tienes una función que recalculará los horarios disponibles
+                                  // basados en la nueva fecha seleccionada y actualizará el estado adecuadamente.
+                                  if (selectedWorkerId != "") {
+                                    calcularHorariosDisponibles();
+                                  }
+                                });
+                              },
+                            ),
+
+                            const SizedBox(height: 20),
+                            // Dropdown para seleccionar el trabajador
+                            DropdownButtonFormField<String>(
+                              value: selectedWorkerId,
+                              onChanged: (newValue) {
+                                setState(() {
+                                  selectedWorkerId = newValue!;
+                                  calcularHorariosDisponibles();
+                                  // Aquí podrías realizar acciones adicionales basadas en el trabajador seleccionado si es necesario
+                                });
+                              },
+                              items: [
+                                const DropdownMenuItem<String>(
+                                  value:
+                                      "", // Valor especial que actúa como nulo.
+                                  child: Text("-- Seleccione --"),
+                                ),
+                                ...trabajadores.map<DropdownMenuItem<String>>(
+                                    (Trabajador trabajador) {
+                                  return DropdownMenuItem<String>(
+                                    value: trabajador
+                                        .idTrabajador, // Asumiendo que Trabajador tiene un campo idTrabajador
+                                    child: Text(
+                                        trabajador.nombre), // y un campo nombre
+                                  );
+                                }).toList(),
+                              ],
+                              decoration: const InputDecoration(
+                                labelText: 'Trabajador',
+                                prefixIcon: Icon(Icons.work),
+                              ),
+                            ),
+
+                            const SizedBox(height: 20),
+                            // Selector de hora
+                            DropdownButtonFormField<String>(
+                              value: currentHorario ??
+                                  selectedTimeSlot, // Asegúrate de manejar este estado correctamente
+                              onChanged: (newValue) {
+                                setState(() {
+                                  selectedTimeSlot = newValue;
+                                  print(newValue);
+                                });
+                              },
+                              items: availableTimes
+                                  .map<DropdownMenuItem<String>>((String time) {
+                                return DropdownMenuItem<String>(
+                                  value: time,
+                                  child: Text(time),
+                                );
+                              }).toList(),
+                              decoration: const InputDecoration(
+                                labelText: 'Horario Disponible',
+                                prefixIcon: Icon(Icons.query_builder),
+                              ),
+                            ),
+
+                            const SizedBox(height: 30),
+                            // Botón para enviar/agendar la cita
+                            // Botón para enviar/agendar la cita
+                            SizedBox(
+                              width: double.infinity, // Ancho del 100%
+                              child: ElevatedButton(
+                                onPressed: selectedTimeSlot != null
+                                    ? () async {
+                                        // Aquí, convertir el horario seleccionado a Timestamps de inicio y fin
+                                        RangoHorario rangoHorario =
+                                            convertirRangoATimestamps(
+                                                selectedTimeSlot!);
+
+                                        // Crear el objeto Cita
+                                        Cita cita = Cita(
+                                          idCita: widget.citaId ??
+                                              '', // Este valor se actualizará después de crear la cita en Firestore
+                                          idCliente:
+                                              uid, // Deberás reemplazar esto con el ID real del cliente
+                                          idServicio:
+                                              selectedServiceId!, // ID del servicio seleccionado
+                                          idTrabajador:
+                                              selectedWorkerId!, // ID del trabajador seleccionado
+                                          fechaHoraInicio: rangoHorario.inicio,
+                                          fechaHoraFin: rangoHorario.fin,
+                                          estado:
+                                              'pendiente', // Estado inicial de la cita
+                                          evaluada: false,
+                                        );
+                                        if (widget.citaId != null) {
+                                          // Estás editando una cita existente
+                                          await CitasController()
+                                              .editarCita(cita)
+                                              .then((_) {
+                                            // Mostrar un mensaje de éxito
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              const SnackBar(
+                                                  content: Text(
+                                                      'Cita actualizada con éxito')),
+                                            );
+                                            // Navegar de regreso al dashboard o la pantalla anterior
+                                            Navigator.of(context).pushNamed(
+                                                DashboardScreen.routeName);
+                                          }).catchError((error) {
+                                            // Manejar el error, por ejemplo, mostrando un mensaje
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              SnackBar(
+                                                  content: Text(
+                                                      'Error al actualizar la cita: $error')),
+                                            );
+                                          });
+                                        } else {
+                                          // Crear una nueva cita
+                                          await CitasController()
+                                              .crearCita(cita)
+                                              .then((_) {
+                                            // Mostrar un mensaje de éxito
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              const SnackBar(
+                                                  content: Text(
+                                                      'Cita agendada con éxito')),
+                                            );
+                                            // Navegar de regreso al dashboard o la pantalla anterior
+                                            Navigator.of(context).pushNamed(
+                                                DashboardScreen.routeName);
+                                          }).catchError((error) {
+                                            // Manejar el error
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              SnackBar(
+                                                  content: Text(
+                                                      'Error al crear la cita: $error')),
+                                            );
+                                          });
+                                        }
+                                      }
+                                    : null,
+                                child: const Text('AGENDAR'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ])
+                  ],
+                )));
   }
 }
