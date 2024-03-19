@@ -28,7 +28,7 @@ void _goToInfoCita(String cita) async {
   @override
   void initState() {
     super.initState();
-    _citasDetailsFuture = _citasController.getAllCitasDetails();
+    _citasDetailsFuture = _citasController.getCitasPendientesDetails();
   }
 
   @override
@@ -94,7 +94,6 @@ void _goToInfoCita(String cita) async {
       (citaDetail['fechaHoraInicio'] as Timestamp).toDate(),
     );
     String idCita = citaDetail['idCita']; // Asegúrate de tener este valor disponible
-    print(idCita);
     return InkWell(
       onTap: () => _goToInfoCita(idCita), // Usando el ID de la cita aquí
       child: Card(
