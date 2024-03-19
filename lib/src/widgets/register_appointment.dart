@@ -32,6 +32,7 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
   String? selectedWorkerId = '';
   DateTime? selectedDate;
   String? selectedTimeSlot;
+  String? currentHorario;
   List<Area> areas = [];
   List<Servicio> servicios = [];
   List<Trabajador> trabajadores = [];
@@ -71,12 +72,15 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
     await cargarServiciosPorArea(service.idArea);
     await cargarTrabajadoresPorArea(service.idArea);
     print(cita.fechaHoraInicio.toDate());
+    String horarioCitaExistente =
+        "${DateFormat('E, d MMM HH:mm').format(cita.fechaHoraInicio.toDate())} - ${DateFormat('E, d MMM HH:mm').format(cita.fechaHoraFin.toDate())}";
 
     setState(() {
       selectedAreaId = service.idArea;
       selectedServiceId = service.idServicio;
       selectedWorkerId = cita.idTrabajador;
       selectedDate = cita.fechaHoraInicio.toDate();
+      currentHorario = horarioCitaExistente;
       // Actualiza el controlador de texto con la fecha de la cita
       dateController.text = DateFormat('yyyy-MM-dd').format(selectedDate!);
     });
@@ -148,7 +152,7 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
 
     // Excluye los horarios ocupados por las citas existentes.
     availableTimes = filtrarHorariosDisponibles(
-        horariosTrabajo, citasDelDia, duracionServicio);
+        horariosTrabajo, citasDelDia, duracionServicio, currentHorario);
 
     setState(() {
       availableTimes = availableTimes;
@@ -243,7 +247,8 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
   }
 
   List<String> filtrarHorariosDisponibles(List<String> horariosTrabajo,
-      List<Cita> citasDelDia, int duracionServicio) {
+      List<Cita> citasDelDia, int duracionServicio,
+      [String? citaActualHorario]) {
     List<String> horariosDisponibles = [];
     DateTime now = DateTime.now(); // Obtener el año actual
     for (var horario in horariosTrabajo) {
@@ -264,7 +269,11 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
         DateTime inicioCita = cita.fechaHoraInicio.toDate();
         DateTime finCita = cita.fechaHoraFin.toDate();
 
-        if (!(fechaHoraFinHorario.isBefore(inicioCita) ||
+        // Si el horario coincide con la cita actual que se está editando, se considera disponible
+        if (citaActualHorario != null && horario == citaActualHorario) {
+          esDisponible = true;
+          break;
+        } else if (!(fechaHoraFinHorario.isBefore(inicioCita) ||
             fechaHoraInicioHorario.isAfter(finCita))) {
           esDisponible = false;
           break;
@@ -275,26 +284,30 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
       }
     }
 
-    if (horariosDisponibles.isEmpty) {
-      // No hay horarios disponibles, mostrar dialog
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text("No hay turnos disponibles"),
-            content: Text(
-                "Parece que no tenemos turnos disponibles para ese día :(\nPor favor, selecciona otra fecha."),
-            actions: <Widget>[
-              TextButton(
-                child: const Text("Cerrar"),
-                onPressed: () {
-                  Navigator.of(context).pop(); // Cierra el dialog
-                },
-              ),
-            ],
-          );
-        },
-      );
+    // Muestra el diálogo si no hay horarios disponibles y no estamos editando o si estamos editando pero el horario actual ya no es válido
+    if (horariosDisponibles.isEmpty ||
+        (citaActualHorario != null &&
+            !horariosDisponibles.contains(citaActualHorario))) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text("No hay turnos disponibles"),
+              content: Text(
+                  "Parece que no tenemos turnos disponibles para ese día :(\nPor favor, selecciona otra fecha."),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text("Cerrar"),
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Cierra el dialog
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      });
     }
     return horariosDisponibles;
   }
@@ -439,7 +452,7 @@ class _RegisterAppointmentState extends State<RegisterAppointment> {
                         const SizedBox(height: 20),
                         // Selector de hora
                         DropdownButtonFormField<String>(
-                          value:
+                          value: currentHorario ??
                               selectedTimeSlot, // Asegúrate de manejar este estado correctamente
                           onChanged: (newValue) {
                             setState(() {
