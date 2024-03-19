@@ -480,14 +480,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 .right, // Aunque el texto está a la derecha, esto no afectará sin espacio adicional
           ),
           const SizedBox(width: 8), // Espacio entre el título y el valor
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 13, // Asegura consistencia en el tamaño de la fuente
-              color: Color.fromARGB(
-                  255, 22, 22, 22), // Ajusta el color según sea necesario
+          Expanded(
+            flex:2,
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 13, // Asegura consistencia en el tamaño de la fuente
+                color: Color.fromARGB(
+                    255, 22, 22, 22), // Ajusta el color según sea necesario
+              ),
+              textAlign: TextAlign.left, // Alinea el texto a la izquierda
+              overflow: TextOverflow.ellipsis,
             ),
-            textAlign: TextAlign.left, // Alinea el texto a la izquierda
           ),
         ],
       );

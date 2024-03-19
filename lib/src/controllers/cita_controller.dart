@@ -102,6 +102,9 @@ class CitasController extends ChangeNotifier {
   Future<void> editarCita(Cita cita) async {
     await _db.collection('citas').doc(cita.idCita).update(cita.toJson());
   }
+  Future<void> actualizarEstadoCita(String idCita, String nuevoEstado) async {
+  await _db.collection('citas').doc(idCita).update({'estado': nuevoEstado});
+}
 
   Future<void> eliminarCitaPorId(String idCita) async {
     await _db.collection('citas').doc(idCita).delete();
@@ -225,4 +228,37 @@ class CitasController extends ChangeNotifier {
 
     return await Future.wait(citasDetailsFutures);
   }
+  Future<List<Map<String, dynamic>>> getCitasPendientesDetails() async {
+    // Se modifica esta línea para incluir el filtro por el estado "pendiente"
+    QuerySnapshot citasSnapshot = await _db.collection('citas').where('estado', isEqualTo: 'pendiente').get();
+
+    List<Future<Map<String, dynamic>>> citasDetailsFutures = citasSnapshot.docs.map((doc) async {
+      Map<String, dynamic> cita = doc.data() as Map<String, dynamic>;
+
+      // Obtener el nombre del servicio
+      DocumentSnapshot servicioSnapshot = await _db.collection('servicios').doc(cita['idServicio']).get();
+      Map<String, dynamic>? servicioData = servicioSnapshot.data() as Map<String, dynamic>?;
+      String nombreServicio = servicioData?['nombre'] ?? 'Desconocido';
+
+      // Obtener el nombre del cliente
+      DocumentSnapshot clienteSnapshot = await _db.collection('usuarios').doc(cita['idCliente']).get();
+      Map<String, dynamic>? clienteData = clienteSnapshot.data() as Map<String, dynamic>?;
+      String nombreCliente = clienteData != null ? "${clienteData['nombre']} ${clienteData['apellido']}" : 'Desconocido';
+
+      // Obtener el nombre del trabajador
+      DocumentSnapshot trabajadorSnapshot = await _db.collection('trabajadores').doc(cita['idTrabajador']).get();
+      Map<String, dynamic>? trabajadorData = trabajadorSnapshot.data() as Map<String, dynamic>?;
+      String nombreTrabajador = trabajadorData?['nombre'] ?? 'Desconocido';
+
+      // Agrega la información al mapa de la cita
+      cita['nombreServicio'] = nombreServicio;
+      cita['nombreCliente'] = nombreCliente;
+      cita['nombreTrabajador'] = nombreTrabajador;
+
+      return cita;
+    }).toList();
+
+    return await Future.wait(citasDetailsFutures);
+  }
+
 }

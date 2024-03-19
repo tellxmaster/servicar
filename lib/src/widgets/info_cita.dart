@@ -1,9 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:servicar_movil/src/controllers/cita_controller.dart';
 import 'package:servicar_movil/src/controllers/servicio_controller.dart';
+import 'package:servicar_movil/src/controllers/usuario_controller.dart';
 import 'package:servicar_movil/src/models/cita.dart';
+import 'package:servicar_movil/src/models/usuario.dart';
+import 'package:servicar_movil/src/widgets/admin_screen.dart';
+import 'package:servicar_movil/src/widgets/dashboard_screen.dart';
 import 'package:servicar_movil/src/widgets/register_appointment.dart';
 import 'package:servicar_movil/src/widgets/register_evaluation.dart';
 
@@ -20,6 +25,8 @@ class _InfoCitaState extends State<InfoCita> {
   late Future<Cita> _detalleCita;
   late Future<String> _nombreServicio;
   final CitasController _citaController = CitasController();
+  final UsuarioController _usuarioController = UsuarioController(); // Instancia de UsuarioController
+  Usuario? _usuarioActual;
 
   String formatTimestamp(Timestamp timestamp) {
     DateTime date = timestamp.toDate();
@@ -86,7 +93,19 @@ class _InfoCitaState extends State<InfoCita> {
       ));
     });
   }
-
+  Future<void> _cargarUsuarioActual() async {
+    final FirebaseAuth auth = FirebaseAuth.instance;
+    try {
+      // Aquí asumimos que tienes algún método para obtener el UID del usuario actual. Ajusta según tu implementación.
+      String uid = auth.currentUser!.uid;
+      Usuario usuario = await _usuarioController.obtenerUsuario(uid);
+      setState(() {
+        _usuarioActual = usuario;
+      });
+    } catch (e) {
+      print("Error al cargar el usuario actual: $e");
+    }
+  }
   void _handleCancelar(BuildContext context, String idCita) async {
     // Mostrar cuadro de diálogo de confirmación
     bool confirmado = await showDialog(
@@ -152,6 +171,7 @@ class _InfoCitaState extends State<InfoCita> {
       _nombreServicio =
           ServicioController().obtenerNombreServicioPorId(cita.idServicio);
     });
+    _cargarUsuarioActual();
   }
 
   @override
@@ -164,7 +184,13 @@ class _InfoCitaState extends State<InfoCita> {
             icon: const Icon(Icons.arrow_back),
             onPressed: () {
               // Al presionar la flecha de atrás, se retorna false a la página anterior.
-              Navigator.of(context).pop(false);
+               if (_usuarioActual!.rol == 'admin'){
+                Navigator.of(context).pushNamed(
+                                             AdminScreen.routeName);
+               }else{
+                Navigator.of(context).pushNamed(
+                                            DashboardScreen.routeName);
+               }   
             },
           ),
           // El resto de tu AppBar como acciones, título, etc.
@@ -254,11 +280,31 @@ class _InfoCitaState extends State<InfoCita> {
                                 snapshotCita.data!.fechaHoraFin),
                           ),
                           const SizedBox(height: 20),
+                          if (_usuarioActual != null && _usuarioActual!.rol == 'admin') ...[
+                          ElevatedButton(
+                            onPressed: () {
+                              _handleCompletarCita(context, snapshotCita.data!.idCita);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 15.0, horizontal: 20.0),
+                              backgroundColor: Colors.green,
+                              shape: RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.circular(8), // Rounded corners
+                              ),
+                              elevation: 5, // Shadow depth
+                            ),
+                            child: const Text('Completar Cita'),
+                          ),
+                        ] else ...[
+                          
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
                               Expanded(
-                                child: ElevatedButton(
+                                child: 
+                                ElevatedButton(
                                   onPressed: () {
                                     _handleEditar(context);
                                   },
@@ -280,6 +326,7 @@ class _InfoCitaState extends State<InfoCita> {
                             ],
                           ),
                           const SizedBox(height: 20),
+                          if (!snapshotCita.data!.evaluada)
                           ElevatedButton(
                             onPressed: () {
                               _handleEvaluarCita(context);
@@ -296,6 +343,7 @@ class _InfoCitaState extends State<InfoCita> {
                             ),
                             child: const Text('Evaluar Cita'),
                           ),
+                        ],
                         ],
                       ),
                     );
@@ -333,4 +381,54 @@ Widget _quoteDetailRow({required String title, required String value}) =>
           ),
         ],
       ),
-    );
+  );
+void _handleCompletarCita(BuildContext context, String idCita) {
+  // Mostrar cuadro de diálogo para confirmación
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('Confirmar Acción'),
+        content: const Text('¿Marcar esta cita como completada?'),
+        actions: <Widget>[
+          TextButton(
+            child: const Text('Cancelar'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+          TextButton(
+            child: const Text('Confirmar'),
+            onPressed: () async {
+              // Aquí actualizas el estado de la cita en Firestore
+              try {
+                await CitasController().actualizarEstadoCita(idCita, 'completado');
+                // ignore: use_build_context_synchronously
+                Navigator.of(context).pushNamed(
+                                             AdminScreen.routeName); // Cierra el diálogo de confirmación
+                // ignore: use_build_context_synchronously
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Cita marcada como completada.'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+                // Opcionalmente, puedes recargar los datos de la cita o volver a la pantalla anterior
+              }catch (e) {
+                // ignore: use_build_context_synchronously
+                Navigator.of(context).pop(); // Cierra el diálogo de confirmación
+                // ignore: use_build_context_synchronously
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error al actualizar el estado de la cita: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+          ),
+        ],
+      );
+    },
+  );
+}

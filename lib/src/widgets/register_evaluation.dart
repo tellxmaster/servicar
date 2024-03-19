@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:servicar_movil/src/controllers/evaluacion_controller.dart';
 import 'package:servicar_movil/src/models/evaluacion.dart';
+import 'package:servicar_movil/src/widgets/info_cita.dart';
 import 'package:servicar_movil/src/widgets/transaction_toggle.dart';
 
 class RegisterEvaluation extends StatefulWidget {
@@ -108,7 +109,8 @@ class _RegisterEvaluationState extends State<RegisterEvaluation> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Evaluación agregada con éxito')),
                       );
-                      Navigator.of(context).pop(); // Regresar a la pantalla anterior
+                      Navigator.of(context)
+                       .push(MaterialPageRoute(builder: (context) => InfoCita(id:widget.citaId?? '-' )));
                     } catch (e) {
                       // Si algo sale mal, informa al usuario.
                       ScaffoldMessenger.of(context).showSnackBar(
